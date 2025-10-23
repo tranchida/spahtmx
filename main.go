@@ -10,13 +10,6 @@ import (
 	"github.com/a-h/templ"
 )
 
-type PageData struct {
-	Title     string
-	Users     []model.User
-	UserCount int
-	PageViews int
-}
-
 func main() {
 
 	http.HandleFunc("/", handleIndexPage)
