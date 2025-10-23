@@ -1,6 +1,8 @@
 package main
 
 import (
+	"embed"
+	"io/fs"
 	"log"
 	"net/http"
 	"spahtmx/internal/model"
@@ -9,6 +11,9 @@ import (
 
 	"github.com/a-h/templ"
 )
+
+//go:embed static/*
+var staticFS embed.FS
 
 func main() {
 
@@ -20,8 +25,9 @@ func main() {
 
 	http.HandleFunc("/api/switch/{id}", handleUserStatusSwitch)
 
-	// Servir les fichiers statiques
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	// Servir les fichiers statiques depuis le système de fichiers embarqué
+    staticSubFS, _ := fs.Sub(staticFS, "static")
+    http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSubFS))))
 
 	log.Println("🚀 Serveur démarré sur http://localhost:8765")
 	log.Fatal(http.ListenAndServe(":8765", nil))
