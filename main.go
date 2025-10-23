@@ -26,8 +26,8 @@ func main() {
 	http.HandleFunc("/api/switch/{id}", handleUserStatusSwitch)
 
 	// Servir les fichiers statiques depuis le système de fichiers embarqué
-    staticSubFS, _ := fs.Sub(staticFS, "static")
-    http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSubFS))))
+	staticSubFS, _ := fs.Sub(staticFS, "static")
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSubFS))))
 
 	log.Println("🚀 Serveur démarré sur http://localhost:8765")
 	log.Fatal(http.ListenAndServe(":8765", nil))
@@ -38,8 +38,12 @@ func handleIndexPage(writer http.ResponseWriter, request *http.Request) {
 }
 
 func handleAdminPage(writer http.ResponseWriter, request *http.Request) {
+
 	users := model.GetUsers()
-	handlePage(writer, request, templates.Admin(users, "210", "23400"))
+	usersCount := model.GetUserCount()
+	pageViews := model.GetPageView()
+
+	handlePage(writer, request, templates.Admin(users, usersCount, pageViews))
 }
 
 func handleAboutPage(writer http.ResponseWriter, request *http.Request) {

@@ -30,3 +30,11 @@ func NewUser(id int, username, email string) *User {
 func GetUsers() []User {
 	return users
 }
+
+func GetUserCount() string {
+	return "210"
+}
+
+func GetPageView() string {
+	return "12345"
+}
