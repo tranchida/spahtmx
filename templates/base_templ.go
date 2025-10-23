@@ -8,7 +8,7 @@ package templates
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-func Base(contents templ.Component) templ.Component {
+func Base(page string, contents templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -29,7 +29,15 @@ func Base(contents templ.Component) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"fr\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Accueil - SPA HTMX</title><script src=\"static/js/htmx.min.js\"></script><script src=\"static/js/tailwind.min.js\"></script><script>\n        tailwind.config = {\n            theme: {\n                extend: {\n                    colors: {\n                        primary: '#667eea',\n                        secondary: '#764ba2',\n                    }\n                }\n            }\n        }\n    </script></head><body class=\"min-h-screen bg-gradient-to-br from-primary to-secondary\"><nav class=\"bg-white/95 shadow-lg sticky top-0 z-50\"><div class=\"container mx-auto px-6 py-4\"><div class=\"flex justify-center space-x-8\"><a href=\"/\" hx-get=\"/\" hx-target=\"#content\" hx-push-url=\"/\" class=\"text-primary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5\">Accueil</a> <a href=\"/admin\" hx-get=\"/admin\" hx-target=\"#content\" hx-push-url=\"/admin\" class=\"text-primary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5\">Admin</a> <a href=\"/about\" hx-get=\"/about\" hx-target=\"#content\" hx-push-url=\"/about\" class=\"text-primary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5\">À propos</a></div></div></nav><main id=\"content\" class=\"container mx-auto px-6 py-8 max-w-6xl\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"fr\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Accueil - SPA HTMX</title><script src=\"static/js/htmx.min.js\"></script><script src=\"static/js/tailwind.min.js\"></script><script>\n        tailwind.config = {\n            theme: {\n                extend: {\n                    colors: {\n                        primary: '#667eea',\n                        secondary: '#764ba2',\n                    }\n                }\n            }\n        }\n    </script></head><body class=\"min-h-screen bg-gradient-to-br from-primary to-secondary\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = Nav(page).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<main id=\"content\" class=\"container mx-auto px-6 py-8 max-w-6xl\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -37,7 +45,15 @@ func Base(contents templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</main><footer class=\"text-center py-8 text-white mt-8\"><p>&copy; 2025 SPA HTMX Application</p></footer></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</main>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = Footer().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

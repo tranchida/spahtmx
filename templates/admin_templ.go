@@ -33,33 +33,41 @@ func Admin(users []model.User, userCount string, pageView string) templ.Componen
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<title>Admin - HTMX SPA</title><div class=\"bg-white rounded-xl shadow-2xl p-8 animate-fade-in\"><h1 class=\"text-4xl font-bold text-primary mb-6\">Panneau d'administration</h1><p class=\"text-gray-700 text-lg mb-6\">Bienvenue dans l'espace administrateur.</p><div class=\"bg-gray-50 rounded-lg p-6 border-l-4 border-primary mb-6\"><h2 class=\"text-2xl font-bold text-secondary mb-4\">Actions administratives</h2><ul class=\"space-y-3 ml-6\"><li class=\"text-gray-700 flex items-start\"><svg class=\"w-6 h-6 text-primary mr-2 mt-0.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path d=\"M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z\"></path></svg> Gestion des utilisateurs</li><li class=\"text-gray-700 flex items-start\"><svg class=\"w-6 h-6 text-primary mr-2 mt-0.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z\" clip-rule=\"evenodd\"></path></svg> Configuration du système</li><li class=\"text-gray-700 flex items-start\"><svg class=\"w-6 h-6 text-primary mr-2 mt-0.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path d=\"M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z\"></path></svg> Statistiques et rapports</li></ul></div><div class=\"grid grid-cols-1 md:grid-cols-2 gap-6\"><div class=\"bg-gradient-to-br from-primary to-secondary text-white rounded-lg p-8 shadow-lg\"><h3 class=\"text-xl font-semibold mb-2\">Utilisateurs</h3><p class=\"text-5xl font-bold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<title>Admin - HTMX SPA</title>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = Nav("/admin").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-white rounded-xl shadow-2xl p-8 animate-fade-in\"><h1 class=\"text-4xl font-bold text-primary mb-6\">Panneau d'administration</h1><p class=\"text-gray-700 text-lg mb-6\">Bienvenue dans l'espace administrateur.</p><div class=\"bg-gray-50 rounded-lg p-6 border-l-4 border-primary mb-6\"><h2 class=\"text-2xl font-bold text-secondary mb-4\">Actions administratives</h2><ul class=\"space-y-3 ml-6\"><li class=\"text-gray-700 flex items-start\"><svg class=\"w-6 h-6 text-primary mr-2 mt-0.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path d=\"M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z\"></path></svg> Gestion des utilisateurs</li><li class=\"text-gray-700 flex items-start\"><svg class=\"w-6 h-6 text-primary mr-2 mt-0.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z\" clip-rule=\"evenodd\"></path></svg> Configuration du système</li><li class=\"text-gray-700 flex items-start\"><svg class=\"w-6 h-6 text-primary mr-2 mt-0.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path d=\"M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z\"></path></svg> Statistiques et rapports</li></ul></div><div class=\"grid grid-cols-1 md:grid-cols-2 gap-6\"><div class=\"bg-gradient-to-br from-primary to-secondary text-white rounded-lg p-8 shadow-lg\"><h3 class=\"text-xl font-semibold mb-2\">Utilisateurs</h3><p class=\"text-5xl font-bold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(userCount)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/admin.templ`, Line: 41, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/admin.templ`, Line: 42, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</p></div><div class=\"bg-gradient-to-br from-primary to-secondary text-white rounded-lg p-8 shadow-lg\"><h3 class=\"text-xl font-semibold mb-2\">Pages vues</h3><p class=\"text-5xl font-bold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p></div><div class=\"bg-gradient-to-br from-primary to-secondary text-white rounded-lg p-8 shadow-lg\"><h3 class=\"text-xl font-semibold mb-2\">Pages vues</h3><p class=\"text-5xl font-bold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(pageView)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/admin.templ`, Line: 45, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/admin.templ`, Line: 46, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -67,7 +75,7 @@ func Admin(users []model.User, userCount string, pageView string) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<style>\n@keyframes fade-in {\n    from { opacity: 0; transform: translateY(20px); }\n    to { opacity: 1; transform: translateY(0); }\n}\n.animate-fade-in {\n    animation: fade-in 0.3s ease-in;\n}\n</style>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<style>\n@keyframes fade-in {\n    from { opacity: 0; transform: translateY(20px); }\n    to { opacity: 1; transform: translateY(0); }\n}\n.animate-fade-in {\n    animation: fade-in 0.3s ease-in;\n}\n</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

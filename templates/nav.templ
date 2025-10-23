@@ -1,0 +1,51 @@
+package templates
+
+templ Nav(page string) {
+
+    {{ 
+        selectClass := "text-secondary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5" 
+        unselectClass := "text-primary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5" 
+
+        indexClass, adminClass, aboutClass := unselectClass, unselectClass, unselectClass
+        switch page {
+            case "/":
+                indexClass = selectClass
+            case "/admin":
+                adminClass = selectClass
+            case "/about":
+                aboutClass = selectClass
+        }
+
+    }}
+
+	<nav id="nav" class="bg-white/95 shadow-lg sticky top-0 z-50" hx-swap-oob="true">
+		<div class="container mx-auto px-6 py-4">
+			<div class="flex justify-center space-x-8">
+				<a
+					href="/"
+					hx-get="/"
+					hx-target="#content"
+					hx-push-url="/"
+					class={indexClass}>
+						Accueil
+				</a>
+				<a
+					href="/admin"
+					hx-get="/admin"
+					hx-target="#content"
+					hx-push-url="/admin"
+					class={adminClass}>
+						Admin
+				</a>
+				<a
+					href="/about"
+					hx-get="/about"
+					hx-target="#content"
+					hx-push-url="/about"
+					class={aboutClass}>
+						A propos
+				</a>
+			</div>
+		</div>
+	</nav>
+}

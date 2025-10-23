@@ -63,6 +63,9 @@ func handleUserStatusSwitch(writer http.ResponseWriter, request *http.Request) {
 
 func handlePage(writer http.ResponseWriter, request *http.Request, contents templ.Component) {
 	// Détecter si c'est une requête HTMX via le header
+
+	page := request.Pattern
+
 	if request.Header.Get("HX-Request") == "true" {
 		err := contents.Render(request.Context(), writer)
 		if err != nil {
@@ -70,7 +73,7 @@ func handlePage(writer http.ResponseWriter, request *http.Request, contents temp
 			http.Error(writer, "Erreur interne du serveur", http.StatusInternalServerError)
 		}
 	} else {
-		err := templates.Base(contents).Render(request.Context(), writer)
+		err := templates.Base(page, contents).Render(request.Context(), writer)
 		if err != nil {
 			log.Printf("Erreur lors du rendu du template: %v", err)
 			http.Error(writer, "Erreur interne du serveur", http.StatusInternalServerError)

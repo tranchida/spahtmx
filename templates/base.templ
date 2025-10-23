@@ -1,6 +1,6 @@
 package templates
 
-templ Base(contents templ.Component) {
+templ Base(page string, contents templ.Component) {
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -24,32 +24,14 @@ templ Base(contents templ.Component) {
     </script>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-primary to-secondary">
-    <nav class="bg-white/95 shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex justify-center space-x-8">
-                <a href="/" hx-get="/" hx-target="#content" hx-push-url="/"
-                   class="text-primary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5">
-                    Accueil
-                </a>
-                <a href="/admin" hx-get="/admin" hx-target="#content" hx-push-url="/admin"
-                   class="text-primary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5">
-                    Admin
-                </a>
-                <a href="/about" hx-get="/about" hx-target="#content" hx-push-url="/about"
-                   class="text-primary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5">
-                    À propos
-                </a>
-            </div>
-        </div>
-    </nav>
+
+    @Nav(page)
 
     <main id="content" class="container mx-auto px-6 py-8 max-w-6xl">
         @contents
     </main>
 
-    <footer class="text-center py-8 text-white mt-8">
-        <p>&copy; 2025 SPA HTMX Application</p>
-    </footer>
+    @Footer()
 </body>
 </html>
 
