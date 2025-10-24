@@ -1,29 +1,39 @@
 # SPA HTMX avec Go
 
-Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind CSS et les templates Go.
+Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind CSS et Templ.
 
 ## 🚀 Fonctionnalités
 
 - **3 pages** : Accueil, Admin, À propos
 - **Navigation SPA** : Pas de rechargement de page grâce à HTMX
-- **Templates Go** : Rendu côté serveur avec le système de templates natif de Go
+- **Templates Templ** : Rendu côté serveur avec Templ (type-safe Go templates)
 - **Design moderne** : Interface responsive avec Tailwind CSS et animations fluides
-- **Icônes SVG** : Interface enrichie avec des icônes intégrées
+- **Gestion d'utilisateurs** : Page admin avec liste d'utilisateurs et statistiques
+- **API interactive** : Toggle du statut utilisateur avec HTMX
+- **Fichiers statiques embarqués** : Déploiement simplifié avec embed.FS
 
 ## 📁 Structure du projet
 
 ```
 .
 ├── main.go              # Serveur HTTP et handlers
-├── templates/           # Templates HTML
-│   ├── base.html       # Template de base avec navigation
-│   ├── index.html      # Page d'accueil
-│   ├── admin.html      # Page admin avec statistiques
-│   └── about.html      # Page à propos
-└── static/             # Fichiers statiques
-    ├── css/
-    │   └── style.css   # (non utilisé - remplacé par Tailwind CSS)
-    └── js/             # Scripts JavaScript
+├── go.mod               # Dépendances Go (templ, air)
+├── internal/
+│   └── model/
+│       └── user.go      # Modèle User et fonctions de données
+├── templates/           # Templates Templ
+│   ├── base.templ       # Template de base avec navigation
+│   ├── nav.templ        # Composant navigation
+│   ├── footer.templ     # Composant footer
+│   ├── index.templ      # Page d'accueil
+│   ├── admin.templ      # Page admin avec statistiques
+│   ├── about.templ      # Page à propos
+│   ├── userlist.templ   # Liste d'utilisateurs
+│   └── *_templ.go       # Fichiers générés par Templ
+└── static/              # Fichiers statiques (embarqués)
+    └── js/
+        ├── htmx.min.js
+        └── tailwind.min.js
 ```
 
 ## 🛠️ Installation et démarrage
@@ -32,15 +42,29 @@ Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind C
 
 2. Clonez le projet et accédez au répertoire :
 ```bash
-cd /home/xcigta/dev/test/web/htmx/spahtmx
+cd spahtmx
 ```
 
-3. Lancez le serveur :
+3. Installez les dépendances :
+```bash
+go mod download
+```
+
+4. Générez les templates Templ (si modifiés) :
+```bash
+go run github.com/a-h/templ/cmd/templ@latest generate
+```
+
+5. Lancez le serveur :
 ```bash
 go run main.go
 ```
+Ou utilisez Air pour le développement avec rechargement automatique :
+```bash
+go run github.com/air-verse/air@latest
+```
 
-4. Ouvrez votre navigateur à l'adresse : **http://localhost:8765**
+6. Ouvrez votre navigateur à l'adresse : **http://localhost:8765**
 
 ## 🎯 Comment ça fonctionne
 
@@ -57,26 +81,31 @@ L'application utilise HTMX pour créer une expérience SPA sans framework JavaSc
 
 **Pages complètes** (première visite ou rechargement) :
 - `/` - Page d'accueil complète
-- `/admin` - Page admin complète avec statistiques
+- `/admin` - Page admin complète avec statistiques et liste d'utilisateurs
 - `/about` - Page à propos complète
 
-**Fragments HTMX** (navigation SPA) :
-- `/page/index` - Fragment de contenu pour l'accueil
-- `/page/admin` - Fragment de contenu pour admin
-- `/page/about` - Fragment de contenu pour à propos
+**API HTMX** :
+- `/api/switch/{id}` - Toggle du statut d'un utilisateur (retourne la liste mise à jour)
 
 **Fichiers statiques** :
-- `/static/*` - Serveur de fichiers statiques
+- `/static/*` - Serveur de fichiers statiques (embarqués avec embed.FS)
 
 ## 🎨 Personnalisation
 
 ### Modifier les templates
-Les templates HTML se trouvent dans le dossier `templates/` :
-- `base.html` : Layout principal avec navigation et configuration Tailwind
-- `index.html`, `admin.html`, `about.html` : Contenu des pages
+Les templates Templ se trouvent dans le dossier `templates/` avec l'extension `.templ` :
+- `base.templ` : Layout principal avec navigation et configuration Tailwind
+- `nav.templ`, `footer.templ` : Composants de navigation et footer
+- `index.templ`, `admin.templ`, `about.templ` : Contenu des pages
+- `userlist.templ` : Composant de liste d'utilisateurs
+
+Après modification, générez les fichiers Go :
+```bash
+go run github.com/a-h/templ/cmd/templ@latest generate
+```
 
 ### Personnaliser les couleurs Tailwind
-Dans `templates/base.html`, modifiez la configuration Tailwind :
+Dans `templates/base.templ`, modifiez la configuration Tailwind :
 ```javascript
 tailwind.config = {
     theme: {
@@ -91,30 +120,48 @@ tailwind.config = {
 ```
 
 ### Ajouter de nouvelles pages
-1. Créez un nouveau template dans `templates/` (ex: `contact.html`)
-2. Ajoutez les routes dans `main.go` :
+1. Créez un nouveau template dans `templates/` (ex: `contact.templ`)
 ```go
-http.HandleFunc("/contact", handleContact)
-http.HandleFunc("/page/contact", handleContactFragment)
+package templates
+
+templ Contact() {
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        <h1 class="text-3xl font-bold mb-4">Contact</h1>
+        // Votre contenu ici
+    </div>
+}
 ```
-3. Implémentez les handlers correspondants
+2. Générez le code Go : `templ generate`
+3. Ajoutez la route dans `main.go` :
+```go
+http.HandleFunc("/contact", handleContactPage)
+```
+4. Implémentez le handler :
+```go
+func handleContactPage(writer http.ResponseWriter, request *http.Request) {
+    handlePage(writer, request, templates.Contact())
+}
+```
 
 ## 📝 Technologies
 
 - **Go 1.25** - Backend et serveur HTTP natif
-- **HTMX 1.9.10** - Interactions AJAX sans JavaScript complexe
+- **Templ** - Templates type-safe pour Go (github.com/a-h/templ)
+- **HTMX** - Interactions AJAX sans JavaScript complexe
 - **Tailwind CSS** - Framework CSS utility-first via CDN
-- **HTML Templates** - Système de templates natif de Go
-- **SVG Icons** - Icônes vectorielles intégrées
+- **Air** - Rechargement automatique pour le développement
+- **embed.FS** - Fichiers statiques embarqués dans le binaire
 
 ## 🌟 Avantages de cette stack
 
-- ✅ **Simplicité** : Pas de build frontend, pas de npm, pas de Node.js
+- ✅ **Simplicité** : Pas de build frontend complexe, pas de npm massif
+- ✅ **Type-safety** : Templ fournit des templates type-safe avec autocomplétion
 - ✅ **Performance** : Serveur Go ultra-rapide et léger
 - ✅ **SEO-friendly** : Rendu côté serveur pour toutes les pages
 - ✅ **Expérience utilisateur** : Navigation fluide comme une SPA React
-- ✅ **Maintenabilité** : Code simple et facile à comprendre
-- ✅ **Production-ready** : Binaire Go compilé, facile à déployer
+- ✅ **Maintenabilité** : Code Go pur, facile à comprendre et déboguer
+- ✅ **Production-ready** : Binaire unique avec assets embarqués, déploiement simple
+- ✅ **Hot reload** : Développement rapide avec Air
 
 ## 🚀 Déploiement
 
