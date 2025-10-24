@@ -41,7 +41,7 @@ func Nav(page string) templ.Component {
 		case "/about":
 			aboutClass = selectClass
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<nav id=\"nav\" class=\"bg-white/95 shadow-lg sticky top-0 z-50\" hx-swap-oob=\"true\"><div class=\"container mx-auto px-6 py-4\"><div class=\"flex justify-center space-x-8\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<nav id=\"navigation\" class=\"bg-white/95 shadow-lg sticky top-0 z-50\" hx-swap-oob=\"true\"><div class=\"container mx-auto px-6 py-4\"><div class=\"flex justify-center space-x-8\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

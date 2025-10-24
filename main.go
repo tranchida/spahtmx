@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"embed"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -34,7 +36,7 @@ func main() {
 }
 
 func handleIndexPage(writer http.ResponseWriter, request *http.Request) {
-	handlePage(writer, request, templates.Index())
+	handlePage(writer, request, "/", templates.Index())
 }
 
 func handleAdminPage(writer http.ResponseWriter, request *http.Request) {
@@ -43,11 +45,11 @@ func handleAdminPage(writer http.ResponseWriter, request *http.Request) {
 	usersCount := model.GetUserCount()
 	pageViews := model.GetPageView()
 
-	handlePage(writer, request, templates.Admin(users, usersCount, pageViews))
+	handlePage(writer, request, "/admin", templates.Admin(users, usersCount, pageViews))
 }
 
 func handleAboutPage(writer http.ResponseWriter, request *http.Request) {
-	handlePage(writer, request, templates.About())
+	handlePage(writer, request, "/about", templates.About())
 }
 
 func handleUserStatusSwitch(writer http.ResponseWriter, request *http.Request) {
@@ -58,16 +60,20 @@ func handleUserStatusSwitch(writer http.ResponseWriter, request *http.Request) {
 		model.GetUsers()[idval-1].Status = !model.GetUsers()[idval-1].Status
 	}
 
-	handlePage(writer, request, templates.Userlist(model.GetUsers()))
+	handlePage(writer, request, "/admin", templates.Userlist(model.GetUsers()))
 }
 
-func handlePage(writer http.ResponseWriter, request *http.Request, contents templ.Component) {
+func handlePage(writer http.ResponseWriter, request *http.Request, page string, contents templ.Component) {
 	// Détecter si c'est une requête HTMX via le header
 
-	page := request.Pattern
-
 	if request.Header.Get("HX-Request") == "true" {
-		err := contents.Render(request.Context(), writer)
+		fragment := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			if err := templates.Nav(page).Render(ctx, w); err != nil {
+				return err
+			}
+			return contents.Render(ctx, w)
+		})
+		err := fragment.Render(request.Context(), writer)
 		if err != nil {
 			log.Printf("Erreur lors du rendu du fragment: %v", err)
 			http.Error(writer, "Erreur interne du serveur", http.StatusInternalServerError)
