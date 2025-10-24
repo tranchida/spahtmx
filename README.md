@@ -52,7 +52,7 @@ go mod download
 
 4. Générez les templates Templ (si modifiés) :
 ```bash
-go run github.com/a-h/templ/cmd/templ@latest generate
+go tool templ generate
 ```
 
 5. Lancez le serveur :
@@ -61,7 +61,7 @@ go run main.go
 ```
 Ou utilisez Air pour le développement avec rechargement automatique :
 ```bash
-go run github.com/air-verse/air@latest
+go tool air
 ```
 
 6. Ouvrez votre navigateur à l'adresse : **http://localhost:8765**
@@ -92,17 +92,17 @@ L'application utilise HTMX pour créer une expérience SPA sans framework JavaSc
 
 ## 🎨 Personnalisation
 
+Lance le serveur avec Air et recompilation automatique des templates
+```Bash
+make dev 
+```
+
 ### Modifier les templates
 Les templates Templ se trouvent dans le dossier `templates/` avec l'extension `.templ` :
 - `base.templ` : Layout principal avec navigation et configuration Tailwind
 - `nav.templ`, `footer.templ` : Composants de navigation et footer
 - `index.templ`, `admin.templ`, `about.templ` : Contenu des pages
 - `userlist.templ` : Composant de liste d'utilisateurs
-
-Après modification, générez les fichiers Go :
-```bash
-go run github.com/a-h/templ/cmd/templ@latest generate
-```
 
 ### Personnaliser les couleurs Tailwind
 Dans `templates/base.templ`, modifiez la configuration Tailwind :
@@ -131,12 +131,11 @@ templ Contact() {
     </div>
 }
 ```
-2. Générez le code Go : `templ generate`
-3. Ajoutez la route dans `main.go` :
+2. Ajoutez la route dans `main.go` :
 ```go
 http.HandleFunc("/contact", handleContactPage)
 ```
-4. Implémentez le handler :
+3. Implémentez le handler :
 ```go
 func handleContactPage(writer http.ResponseWriter, request *http.Request) {
     handlePage(writer, request, templates.Contact())
