@@ -10,12 +10,6 @@ type User struct {
 var users []User
 
 func init() {
-	// Initialisation si nécessaire
-	users = []User{
-		{ID: 1, Username: "alice", Email: "alice@fake.com", Status: true},
-		{ID: 2, Username: "bob", Email: "bob@fake.com", Status: false},
-		{ID: 3, Username: "charlie", Email: "charlie@fake.com", Status: true},
-	}
 
 }
 
@@ -28,6 +22,9 @@ func NewUser(id int, username, email string) *User {
 }
 
 func GetUsers() []User {
+
+	var users []User
+	DB.Find(&users)
 	return users
 }
 

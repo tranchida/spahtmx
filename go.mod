@@ -7,7 +7,16 @@ tool (
 	github.com/air-verse/air
 )
 
-require github.com/a-h/templ v0.3.960
+require (
+	github.com/a-h/templ v0.3.960
+	gorm.io/gorm v1.30.0
+)
+
+require (
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
+)
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
@@ -31,11 +40,12 @@ require (
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
 	github.com/tdewolff/parse/v2 v2.8.3 // indirect
-	golang.org/x/mod v0.27.0 // indirect
-	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
-	golang.org/x/tools v0.36.0 // indirect
+	golang.org/x/mod v0.28.0 // indirect
+	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/tools v0.37.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
+	gorm.io/driver/sqlite v1.6.0
 )

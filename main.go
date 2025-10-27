@@ -19,6 +19,8 @@ var staticFS embed.FS
 
 func main() {
 
+	model.ConnectDatabase()
+
 	http.HandleFunc("/", handleIndexPage)
 
 	http.HandleFunc("/admin", handleAdminPage)
@@ -57,7 +59,10 @@ func handleUserStatusSwitch(writer http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 	idval, err := strconv.Atoi(id)
 	if err == nil {
-		model.GetUsers()[idval-1].Status = !model.GetUsers()[idval-1].Status
+		user := model.User{}
+		model.DB.First(&user, idval)
+		user.Status = !user.Status
+		model.DB.Save(&user)
 	}
 
 	handlePage(writer, request, "/admin", templates.Userlist(model.GetUsers()))
