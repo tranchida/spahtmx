@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"spahtmx/internal/model"
 	"spahtmx/templates"
-	"strconv"
 
 	"github.com/a-h/templ"
 )
@@ -57,7 +56,7 @@ func handleAboutPage(writer http.ResponseWriter, request *http.Request) {
 func handleUserStatusSwitch(writer http.ResponseWriter, request *http.Request) {
 
 	id := request.PathValue("id")
-	model.UpdateUserStatus(id)
+	model.UpdateUserStatus(request.Context(), id)
 
 	handlePage(writer, request, "/admin", templates.Userlist(model.GetUsers()))
 }

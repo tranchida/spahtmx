@@ -20,14 +20,14 @@ func GetUsers() []User {
 	return users
 }
 
-func UpdateUserStatus(id string) {
+func UpdateUserStatus(ctx context.Context, id string) {
 
 	genericDB := gorm.G[User](DB)
-	user, err := genericDB.Where("id = ?", id).Take(context.Background())
+	user, err := genericDB.Where("id = ?", id).Take(ctx)
 	if err != nil {
 		return
 	}
-	_, err = genericDB.Where("id = ?", id).Update(context.Background(), "status", !user.Status)
+	_, err = genericDB.Where("id = ?", id).Update(ctx, "status", !user.Status)
 	if err != nil {
 		return
 	}
