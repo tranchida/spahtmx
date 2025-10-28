@@ -1,20 +1,16 @@
 package model
 
+import (
+	"context"
+
+	"gorm.io/gorm"
+)
+
 type User struct {
 	ID       int
 	Username string
 	Email    string
 	Status   bool
-}
-
-var users []User
-
-func NewUser(id int, username, email string) *User {
-	return &User{
-		ID:       id,
-		Username: username,
-		Email:    email,
-	}
 }
 
 func GetUsers() []User {
@@ -24,11 +20,17 @@ func GetUsers() []User {
 	return users
 }
 
-func UpdateUserStatus(id int) {
-	var user User
-	DB.First(&user, id)
-	user.Status = !user.Status
-	DB.Save(&user)
+func UpdateUserStatus(id string) {
+
+	genericDB := gorm.G[User](DB)
+	user, err := genericDB.Where("id = ?", id).Take(context.Background())
+	if err != nil {
+		return
+	}
+	_, err = genericDB.Where("id = ?", id).Update(context.Background(), "status", !user.Status)
+	if err != nil {
+		return
+	}
 }
 
 func GetUserCount() string {

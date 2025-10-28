@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"log"
 	"os"
 	"time"
@@ -40,16 +41,22 @@ func ConnectDatabase() {
 
 	DB = database
 
-	var count int64
-	DB.Model(&User{}).Count(&count)
+	count, err := gorm.G[User](DB).Count(context.Background(), "id")
+	if err != nil {
+		log.Fatal("count failed", err)
+	}
 	log.Printf("Count %d", count)
 	if count == 0 {
-		users = []User{
+		users := []User{
 			{ID: 1, Username: "alice", Email: "alice@fake.com", Status: true},
 			{ID: 2, Username: "bob", Email: "bob@fake.com", Status: false},
 			{ID: 3, Username: "charlie", Email: "charlie@fake.com", Status: true},
 		}
-		DB.Create(users).Save(users)
+		err := gorm.G[[]User](DB).Create(context.Background(), &users)
+		if err != nil {
+			log.Fatal("insert seed records failed", err)
+		}
+
 	}
 
 }

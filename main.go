@@ -57,10 +57,7 @@ func handleAboutPage(writer http.ResponseWriter, request *http.Request) {
 func handleUserStatusSwitch(writer http.ResponseWriter, request *http.Request) {
 
 	id := request.PathValue("id")
-	idval, err := strconv.Atoi(id)
-	if err == nil {
-		model.UpdateUserStatus(idval)
-	}
+	model.UpdateUserStatus(id)
 
 	handlePage(writer, request, "/admin", templates.Userlist(model.GetUsers()))
 }
