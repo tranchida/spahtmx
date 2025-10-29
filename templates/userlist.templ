@@ -1,7 +1,6 @@
 package templates
 
 import (
-    "strconv"
     "spahtmx/internal/model"
 )
 
@@ -13,11 +12,11 @@ templ Userlist(users []model.User) {
         <h2 class="text-xl font-semibold text-primary">{user.Username}</h2>
         <p class="text-gray-700">Email: {user.Email}</p>
         if user.Status {
-            <p class="text-gray-700">Status: Yes</p>
+            <p class="text-gray-700">Status: Oui</p>
         } else {
-            <p class="text-gray-700">Status: No</p>
+            <p class="text-gray-700">Status: Non</p>
         }
-        <button class="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition" hx-post={ "/api/switch/" + strconv.Itoa(user.ID) } hx-target="#userlist">Switch status</button>
+        <button class="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition" hx-post={ "/api/switch/" + user.ID } hx-target="#userlist">Switch status</button>
     </div>
     }
 </div>
