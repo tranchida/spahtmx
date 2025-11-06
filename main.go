@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"spahtmx/internal/model"
 	"spahtmx/templates"
 
@@ -32,8 +33,13 @@ func main() {
 	staticSubFS, _ := fs.Sub(staticFS, "static")
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSubFS))))
 
-	log.Println("🚀 Serveur démarré sur http://localhost:8765")
-	log.Fatal(http.ListenAndServe(":8765", nil))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Println("🚀 Serveur démarré sur http://localhost:" + port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 func handleIndexPage(writer http.ResponseWriter, request *http.Request) {
