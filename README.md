@@ -174,7 +174,7 @@ go build -o spahtmx main.go
 ./spahtmx
 ```
 
-Le serveur écoute sur le port 8765. Vous pouvez modifier ce port dans `main.go` si nécessaire.
+Le serveur écoute sur le port 8080. Vous pouvez modifier ce port dans `main.go` si nécessaire.
 
 ## 📄 License
 
