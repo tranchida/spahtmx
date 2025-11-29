@@ -17,7 +17,7 @@ RUN go tool templ generate
 RUN CGO_ENABLED=1 GOOS=linux go build -o app main.go
 
 # Runtime stage
-FROM gcr.io/distroless/base-debian12
+FROM debian:bookworm-slim
 
 WORKDIR /app
 
