@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"github.com/labstack/echo/v4"
 	"spahtmx/internal/model"
 	"spahtmx/templates"
 
@@ -20,48 +21,51 @@ func main() {
 
 	model.ConnectDatabase()
 
-	http.HandleFunc("/", handleIndexPage)
-
-	http.HandleFunc("/admin", handleAdminPage)
-
-	http.HandleFunc("/about", handleAboutPage)
-
-	http.HandleFunc("/api/switch/{id}", handleUserStatusSwitch)
+	e := echo.New()
+	e.GET("/", handleIndexPage)
+	e.GET("/admin", handleAdminPage)
+	e.GET("/about", handleAboutPage)
+	e.POST("/api/switch/:id", handleUserStatusSwitch)
+	e.GET("/status", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	})
 
 	// Servir les fichiers statiques depuis le système de fichiers embarqué
 	staticSubFS, _ := fs.Sub(staticFS, "static")
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSubFS))))
+	e.StaticFS("/static", staticSubFS)
 
 	log.Println("🚀 Serveur démarré sur http://localhost:8765")
-	log.Fatal(http.ListenAndServe(":8765", nil))
+	e.Start(":8765")
+
 }
 
-func handleIndexPage(writer http.ResponseWriter, request *http.Request) {
-	handlePage(writer, request, "/", templates.Index())
+func handleIndexPage(c echo.Context) error {
+	return handlePage(c.Response(), c.Request(), "/", templates.Index())
 }
 
-func handleAdminPage(writer http.ResponseWriter, request *http.Request) {
+func handleAdminPage(c echo.Context) error {
 
 	users := model.GetUsers()
 	usersCount := model.GetUserCount()
 	pageViews := model.GetPageView()
 
-	handlePage(writer, request, "/admin", templates.Admin(users, usersCount, pageViews))
+	return handlePage(c.Response(), c.Request(), "/admin", templates.Admin(users, usersCount, pageViews))
 }
 
-func handleAboutPage(writer http.ResponseWriter, request *http.Request) {
-	handlePage(writer, request, "/about", templates.About())
+func handleAboutPage(c echo.Context) error {
+	return handlePage(c.Response(), c.Request(), "/about", templates.About())
 }
 
-func handleUserStatusSwitch(writer http.ResponseWriter, request *http.Request) {
+func handleUserStatusSwitch(c echo.Context) error{
 
-	id := request.PathValue("id")
-	model.UpdateUserStatus(request.Context(), id)
+	id := c.Param("id")
+	log.Println("param " + id)
+	model.UpdateUserStatus(c.Request().Context(), id)
 
-	handlePage(writer, request, "/admin", templates.Userlist(model.GetUsers()))
+	return handlePage(c.Response(), c.Request(), "/admin", templates.Userlist(model.GetUsers()))
 }
 
-func handlePage(writer http.ResponseWriter, request *http.Request, page string, contents templ.Component) {
+func handlePage(writer http.ResponseWriter, request *http.Request, page string, contents templ.Component) error{
 	// Détecter si c'est une requête HTMX via le header
 
 	if request.Header.Get("HX-Request") == "true" {
@@ -83,4 +87,5 @@ func handlePage(writer http.ResponseWriter, request *http.Request, page string, 
 			http.Error(writer, "Erreur interne du serveur", http.StatusInternalServerError)
 		}
 	}
+	return nil
 }
