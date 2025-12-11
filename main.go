@@ -40,7 +40,7 @@ func main() {
 }
 
 func handleIndexPage(c echo.Context) error {
-	return handlePage(c.Response(), c.Request(), "/", templates.Index())
+	return handlePage(c, "/", templates.Index())
 }
 
 func handleAdminPage(c echo.Context) error {
@@ -49,42 +49,41 @@ func handleAdminPage(c echo.Context) error {
 	usersCount := model.GetUserCount()
 	pageViews := model.GetPageView()
 
-	return handlePage(c.Response(), c.Request(), "/admin", templates.Admin(users, usersCount, pageViews))
+	return handlePage(c, "/admin", templates.Admin(users, usersCount, pageViews))
 }
 
 func handleAboutPage(c echo.Context) error {
-	return handlePage(c.Response(), c.Request(), "/about", templates.About())
+	return handlePage(c, "/about", templates.About())
 }
 
 func handleUserStatusSwitch(c echo.Context) error{
 
 	id := c.Param("id")
-	log.Println("param " + id)
 	model.UpdateUserStatus(c.Request().Context(), id)
 
-	return handlePage(c.Response(), c.Request(), "/admin", templates.Userlist(model.GetUsers()))
+	return handlePage(c, "/admin", templates.Userlist(model.GetUsers()))
 }
 
-func handlePage(writer http.ResponseWriter, request *http.Request, page string, contents templ.Component) error{
+func handlePage(c echo.Context, page string, contents templ.Component) error{
 	// Détecter si c'est une requête HTMX via le header
 
-	if request.Header.Get("HX-Request") == "true" {
+	if c.Request().Header.Get("HX-Request") == "true" {
 		fragment := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			if err := templates.Nav(page).Render(ctx, w); err != nil {
 				return err
 			}
 			return contents.Render(ctx, w)
 		})
-		err := fragment.Render(request.Context(), writer)
+		err := fragment.Render(c.Request().Context(), c.Response().Writer)
 		if err != nil {
 			log.Printf("Erreur lors du rendu du fragment: %v", err)
-			http.Error(writer, "Erreur interne du serveur", http.StatusInternalServerError)
+			http.Error(c.Response().Writer, "Erreur interne du serveur", http.StatusInternalServerError)
 		}
 	} else {
-		err := templates.Base(page, contents).Render(request.Context(), writer)
+		err := templates.Base(page, contents).Render(c.Request().Context(), c.Response().Writer)
 		if err != nil {
 			log.Printf("Erreur lors du rendu du template: %v", err)
-			http.Error(writer, "Erreur interne du serveur", http.StatusInternalServerError)
+			http.Error(c.Response().Writer, "Erreur interne du serveur", http.StatusInternalServerError)
 		}
 	}
 	return nil
