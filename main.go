@@ -7,9 +7,11 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
-	"github.com/labstack/echo/v4"
 	"spahtmx/internal/model"
 	"spahtmx/templates"
+
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v4"
 
 	"github.com/a-h/templ"
 )
@@ -31,6 +33,8 @@ func main() {
 	model.ConnectDatabase()
 
 	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Gzip())
 	e.GET(RouteIndex, handleIndexPage)
 	e.GET(RouteAdmin, handleAdminPage)
 	e.GET(RouteAbout, handleAboutPage)
