@@ -14,6 +14,15 @@ import (
 	"github.com/a-h/templ"
 )
 
+const (
+    RouteIndex  = "/"
+    RouteAdmin  = "/admin"
+    RouteAbout  = "/about"
+    RouteStatus = "/status"
+    RouteSwitch = "/api/switch/:id"
+    RouteStatic = "/static"
+)
+
 //go:embed static/*
 var staticFS embed.FS
 
@@ -22,11 +31,11 @@ func main() {
 	model.ConnectDatabase()
 
 	e := echo.New()
-	e.GET("/", handleIndexPage)
-	e.GET("/admin", handleAdminPage)
-	e.GET("/about", handleAboutPage)
-	e.POST("/api/switch/:id", handleUserStatusSwitch)
-	e.GET("/status", func(c echo.Context) error {
+	e.GET(RouteIndex, handleIndexPage)
+	e.GET(RouteAdmin, handleAdminPage)
+	e.GET(RouteAbout, handleAboutPage)
+	e.POST(RouteSwitch, handleUserStatusSwitch)
+	e.GET(RouteStatus, func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
@@ -35,7 +44,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Erreur lors de la création du sous-système de fichiers: %v", err)
 	}
-	e.StaticFS("/static", staticSubFS)
+	e.StaticFS(RouteStatic, staticSubFS)
 
 	log.Println("🚀 Serveur démarré sur http://localhost:8765")
 	e.Start(":8765")
@@ -43,7 +52,7 @@ func main() {
 }
 
 func handleIndexPage(c echo.Context) error {
-	return handlePage(c, "/", templates.Index())
+	return handlePage(c, RouteIndex, templates.Index())
 }
 
 func handleAdminPage(c echo.Context) error {
@@ -52,11 +61,11 @@ func handleAdminPage(c echo.Context) error {
 	usersCount := model.GetUserCount()
 	pageViews := model.GetPageView()
 
-	return handlePage(c, "/admin", templates.Admin(users, usersCount, pageViews))
+	return handlePage(c, RouteAdmin, templates.Admin(users, usersCount, pageViews))
 }
 
 func handleAboutPage(c echo.Context) error {
-	return handlePage(c, "/about", templates.About())
+	return handlePage(c, RouteAbout, templates.About())
 }
 
 func handleUserStatusSwitch(c echo.Context) error{
@@ -64,7 +73,7 @@ func handleUserStatusSwitch(c echo.Context) error{
 	id := c.Param("id")
 	model.UpdateUserStatus(c.Request().Context(), id)
 
-	return handlePage(c, "/admin", templates.Userlist(model.GetUsers()))
+	return handlePage(c, RouteAdmin, templates.Userlist(model.GetUsers()))
 }
 
 func handlePage(c echo.Context, page string, contents templ.Component) error {
