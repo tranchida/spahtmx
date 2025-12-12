@@ -31,7 +31,10 @@ func main() {
 	})
 
 	// Servir les fichiers statiques depuis le système de fichiers embarqué
-	staticSubFS, _ := fs.Sub(staticFS, "static")
+	staticSubFS, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		log.Fatalf("Erreur lors de la création du sous-système de fichiers: %v", err)
+	}
 	e.StaticFS("/static", staticSubFS)
 
 	log.Println("🚀 Serveur démarré sur http://localhost:8765")
@@ -64,27 +67,25 @@ func handleUserStatusSwitch(c echo.Context) error{
 	return handlePage(c, "/admin", templates.Userlist(model.GetUsers()))
 }
 
-func handlePage(c echo.Context, page string, contents templ.Component) error{
-	// Détecter si c'est une requête HTMX via le header
+func handlePage(c echo.Context, page string, contents templ.Component) error {
+    fragment := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+        if err := templates.Nav(page).Render(ctx, w); err != nil {
+            return err
+        }
+        return contents.Render(ctx, w)
+    })
 
-	if c.Request().Header.Get("HX-Request") == "true" {
-		fragment := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-			if err := templates.Nav(page).Render(ctx, w); err != nil {
-				return err
-			}
-			return contents.Render(ctx, w)
-		})
-		err := fragment.Render(c.Request().Context(), c.Response().Writer)
-		if err != nil {
-			log.Printf("Erreur lors du rendu du fragment: %v", err)
-			http.Error(c.Response().Writer, "Erreur interne du serveur", http.StatusInternalServerError)
-		}
-	} else {
-		err := templates.Base(page, contents).Render(c.Request().Context(), c.Response().Writer)
-		if err != nil {
-			log.Printf("Erreur lors du rendu du template: %v", err)
-			http.Error(c.Response().Writer, "Erreur interne du serveur", http.StatusInternalServerError)
-		}
-	}
-	return nil
+    isHTMXRequest := c.Request().Header.Get("HX-Request") == "true"
+    var component templ.Component
+    if isHTMXRequest {
+        component = fragment
+    } else {
+        component = templates.Base(page, contents)
+    }
+
+    if err := component.Render(c.Request().Context(), c.Response().Writer); err != nil {
+        log.Printf("Erreur lors du rendu: %v", err)
+        http.Error(c.Response().Writer, "Erreur interne", http.StatusInternalServerError)
+    }
+    return nil
 }
