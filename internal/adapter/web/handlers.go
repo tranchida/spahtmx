@@ -2,14 +2,17 @@ package web
 
 import (
 	"context"
+	"embed"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
-	"spahtmx/internal/domain"
-	"spahtmx/templates"
+	"spahtmx/internal/app"
+	"spahtmx/internal/adapter/web/templates"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 const (
@@ -21,11 +24,39 @@ const (
     RouteStatic = "/static"
 )
 
+//go:embed static/*
+var staticFS embed.FS
+
 type Handler struct {
-	model domain.UserRepository
+	model app.UserService
 }
 
-func NewHandler(model domain.UserRepository) *Handler {
+func InitWeb(userService app.UserService) *echo.Echo{
+
+    handler := NewHandler(userService)
+
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Gzip())
+	e.GET(RouteIndex, handler.HandleIndexPage)
+	e.GET(RouteAdmin, handler.HandleAdminPage)
+	e.GET(RouteAbout, handler.HandleAboutPage)
+	e.POST(RouteSwitch, handler.HandleUserStatusSwitch)
+	e.GET(RouteStatus, func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	})
+
+	// Servir les fichiers statiques depuis le système de fichiers embarqué
+	staticSubFS, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		log.Fatalf("Erreur lors de la création du sous-système de fichiers: %v", err)
+	}
+	e.StaticFS(RouteStatic, staticSubFS)
+
+    return e
+}
+
+func NewHandler(model app.UserService) *Handler {
 	return &Handler{
 		model: model,
 	}

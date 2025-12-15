@@ -5,28 +5,28 @@ import (
 	"spahtmx/internal/domain"
 )
 
-type userService struct{
+type UserService struct{
 	repo domain.UserRepository
 }
 
-func NewUserService(r domain.UserRepository) domain.UserRepository {
-	return &userService{
+func NewUserService(r domain.UserRepository) *UserService {
+	return &UserService{
 		repo: r,
 	}
 }
 
-func (s *userService) GetUsers() []domain.User {
+func (s *UserService) GetUsers() []domain.User {
 	return s.repo.GetUsers()
 }
 
-func (s *userService) UpdateUserStatus(ctx context.Context, id string) {
+func (s *UserService) UpdateUserStatus(ctx context.Context, id string) {
 	s.repo.UpdateUserStatus(ctx, id)
 }
 
-func (s *userService) GetUserCount() string {
+func (s *UserService) GetUserCount() string {
 	return s.repo.GetUserCount()
 }
 
-func (s *userService) GetPageView() string {
+func (s *UserService) GetPageView() string {
 	return s.repo.GetPageView()
 }
