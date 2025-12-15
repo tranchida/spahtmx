@@ -1,10 +1,10 @@
 package templates
 
 import (
-    "spahtmx/internal/model"
+    "spahtmx/internal/domain"
 )
 
-templ Admin(users []model.User, userCount string, pageView string) {
+templ Admin(users []domain.User, userCount string, pageView string) {
 
 <title>Admin - HTMX SPA</title>
 <div class="bg-white rounded-xl shadow-2xl p-8 animate-fade-in">
