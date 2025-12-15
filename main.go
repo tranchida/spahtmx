@@ -9,10 +9,8 @@ import (
 	"spahtmx/internal/adapter/web"
 	"spahtmx/internal/app"
 
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/echo/v4"
-
-	"github.com/a-h/templ"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 const (
@@ -60,50 +58,3 @@ func main() {
 
 }
 
-func handleIndexPage(c echo.Context) error {
-	return handlePage(c, RouteIndex, templates.Index())
-}
-
-func handleAdminPage(c echo.Context) error {
-
-	users := model.GetUsers()
-	usersCount := model.GetUserCount()
-	pageViews := model.GetPageView()
-
-	return handlePage(c, RouteAdmin, templates.Admin(users, usersCount, pageViews))
-}
-
-func handleAboutPage(c echo.Context) error {
-	return handlePage(c, RouteAbout, templates.About())
-}
-
-func handleUserStatusSwitch(c echo.Context) error{
-
-	id := c.Param("id")
-	model.UpdateUserStatus(c.Request().Context(), id)
-
-	return handlePage(c, RouteAdmin, templates.Userlist(model.GetUsers()))
-}
-
-func handlePage(c echo.Context, page string, contents templ.Component) error {
-    fragment := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-        if err := templates.Nav(page).Render(ctx, w); err != nil {
-            return err
-        }
-        return contents.Render(ctx, w)
-    })
-
-    isHTMXRequest := c.Request().Header.Get("HX-Request") == "true"
-    var component templ.Component
-    if isHTMXRequest {
-        component = fragment
-    } else {
-        component = templates.Base(page, contents)
-    }
-
-    if err := component.Render(c.Request().Context(), c.Response().Writer); err != nil {
-        log.Printf("Erreur lors du rendu: %v", err)
-        http.Error(c.Response().Writer, "Erreur interne", http.StatusInternalServerError)
-    }
-    return nil
-}
