@@ -7,8 +7,8 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
-	"spahtmx/internal/app"
 	"spahtmx/internal/adapter/web/templates"
+	"spahtmx/internal/app"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
@@ -16,24 +16,24 @@ import (
 )
 
 const (
-    RouteIndex  = "/"
-    RouteAdmin  = "/admin"
-    RouteAbout  = "/about"
-    RouteStatus = "/status"
-    RouteSwitch = "/api/switch/:id"
-    RouteStatic = "/static"
+	RouteIndex  = "/"
+	RouteAdmin  = "/admin"
+	RouteAbout  = "/about"
+	RouteStatus = "/status"
+	RouteSwitch = "/api/switch/:id"
+	RouteStatic = "/static"
 )
 
 //go:embed static/*
 var staticFS embed.FS
 
 type Handler struct {
-	model app.UserService
+	service app.UserService
 }
 
-func InitWeb(userService app.UserService) *echo.Echo{
+func InitWeb(userService app.UserService) *echo.Echo {
 
-    handler := NewHandler(userService)
+	handler := NewHandler(userService)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -53,12 +53,12 @@ func InitWeb(userService app.UserService) *echo.Echo{
 	}
 	e.StaticFS(RouteStatic, staticSubFS)
 
-    return e
+	return e
 }
 
-func NewHandler(model app.UserService) *Handler {
+func NewHandler(userService app.UserService) *Handler {
 	return &Handler{
-		model: model,
+		service: userService,
 	}
 }
 
@@ -68,9 +68,9 @@ func (h *Handler) HandleIndexPage(c echo.Context) error {
 
 func (h *Handler) HandleAdminPage(c echo.Context) error {
 
-	users := h.model.GetUsers()
-	usersCount := h.model.GetUserCount()
-	pageViews := h.model.GetPageView()
+	users := h.service.GetUsers()
+	usersCount := h.service.GetUserCount()
+	pageViews := h.service.GetPageView()
 
 	return handlePage(c, RouteAdmin, templates.Admin(users, usersCount, pageViews))
 }
@@ -79,33 +79,33 @@ func (h *Handler) HandleAboutPage(c echo.Context) error {
 	return handlePage(c, RouteAbout, templates.About())
 }
 
-func (h *Handler) HandleUserStatusSwitch(c echo.Context) error{
+func (h *Handler) HandleUserStatusSwitch(c echo.Context) error {
 
 	id := c.Param("id")
-	h.model.UpdateUserStatus(c.Request().Context(), id)
+	h.service.UpdateUserStatus(c.Request().Context(), id)
 
-	return handlePage(c, RouteAdmin, templates.Userlist(h.model.GetUsers()))
+	return handlePage(c, RouteAdmin, templates.Userlist(h.service.GetUsers()))
 }
 
 func handlePage(c echo.Context, page string, contents templ.Component) error {
-    fragment := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-        if err := templates.Nav(page).Render(ctx, w); err != nil {
-            return err
-        }
-        return contents.Render(ctx, w)
-    })
+	fragment := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		if err := templates.Nav(page).Render(ctx, w); err != nil {
+			return err
+		}
+		return contents.Render(ctx, w)
+	})
 
-    isHTMXRequest := c.Request().Header.Get("HX-Request") == "true"
-    var component templ.Component
-    if isHTMXRequest {
-        component = fragment
-    } else {
-        component = templates.Base(page, contents)
-    }
+	isHTMXRequest := c.Request().Header.Get("HX-Request") == "true"
+	var component templ.Component
+	if isHTMXRequest {
+		component = fragment
+	} else {
+		component = templates.Base(page, contents)
+	}
 
-    if err := component.Render(c.Request().Context(), c.Response().Writer); err != nil {
-        log.Printf("Erreur lors du rendu: %v", err)
-        http.Error(c.Response().Writer, "Erreur interne", http.StatusInternalServerError)
-    }
-    return nil
+	if err := component.Render(c.Request().Context(), c.Response().Writer); err != nil {
+		log.Printf("Erreur lors du rendu: %v", err)
+		http.Error(c.Response().Writer, "Erreur interne", http.StatusInternalServerError)
+	}
+	return nil
 }
