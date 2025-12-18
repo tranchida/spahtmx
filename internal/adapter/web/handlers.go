@@ -36,7 +36,7 @@ func InitWeb(userService app.UserService) *echo.Echo {
 	handler := NewHandler(userService)
 
 	e := echo.New()
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Gzip())
 	e.GET(RouteIndex, handler.HandleIndexPage)
 	e.GET(RouteAdmin, handler.HandleAdminPage)

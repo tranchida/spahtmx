@@ -7,8 +7,6 @@ import (
 	"spahtmx/internal/app"
 )
 
-
-
 func main() {
 
 	db := gorm.InitDB()
@@ -20,7 +18,9 @@ func main() {
 	e := web.InitWeb(*userService)
 
 	log.Println("🚀 Serveur démarré sur http://localhost:8765")
-	e.Start(":8765")
+	err := e.Start(":8765")
+	if err != nil {
+		log.Fatal("Server start failed", err)
+	}
 
 }
-
