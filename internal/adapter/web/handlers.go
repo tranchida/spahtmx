@@ -2,9 +2,7 @@ package web
 
 import (
 	"context"
-	"embed"
 	"io"
-	"io/fs"
 	"log"
 	"net/http"
 	"spahtmx/internal/adapter/web/templates"
@@ -12,7 +10,6 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 const (
@@ -24,36 +21,8 @@ const (
 	RouteStatic = "/static"
 )
 
-//go:embed static/*
-var staticFS embed.FS
-
 type Handler struct {
 	service app.UserService
-}
-
-func InitWeb(userService app.UserService) *echo.Echo {
-
-	handler := NewHandler(userService)
-
-	e := echo.New()
-	e.Use(middleware.RequestLogger())
-	e.Use(middleware.Gzip())
-	e.GET(RouteIndex, handler.HandleIndexPage)
-	e.GET(RouteAdmin, handler.HandleAdminPage)
-	e.GET(RouteAbout, handler.HandleAboutPage)
-	e.POST(RouteSwitch, handler.HandleUserStatusSwitch)
-	e.GET(RouteStatus, func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
-	})
-
-	// Servir les fichiers statiques depuis le système de fichiers embarqué
-	staticSubFS, err := fs.Sub(staticFS, "static")
-	if err != nil {
-		log.Fatalf("Erreur lors de la création du sous-système de fichiers: %v", err)
-	}
-	e.StaticFS(RouteStatic, staticSubFS)
-
-	return e
 }
 
 func NewHandler(userService app.UserService) *Handler {
@@ -68,9 +37,9 @@ func (h *Handler) HandleIndexPage(c echo.Context) error {
 
 func (h *Handler) HandleAdminPage(c echo.Context) error {
 
-	users := h.service.GetUsers()
-	usersCount := h.service.GetUserCount()
-	pageViews := h.service.GetPageView()
+	users := h.service.GetUsers(c.Request().Context())
+	usersCount := h.service.GetUserCount(c.Request().Context())
+	pageViews := h.service.GetPageView(c.Request().Context())
 
 	return handlePage(c, RouteAdmin, templates.Admin(users, usersCount, pageViews))
 }
@@ -84,7 +53,7 @@ func (h *Handler) HandleUserStatusSwitch(c echo.Context) error {
 	id := c.Param("id")
 	h.service.UpdateUserStatus(c.Request().Context(), id)
 
-	return handlePage(c, RouteAdmin, templates.Userlist(h.service.GetUsers()))
+	return handlePage(c, RouteAdmin, templates.Userlist(h.service.GetUsers(c.Request().Context())))
 }
 
 func handlePage(c echo.Context, page string, contents templ.Component) error {

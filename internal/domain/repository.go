@@ -3,8 +3,8 @@ package domain
 import "context"
 
 type UserRepository interface {
-	GetUsers() []User
+	GetUsers(ctx context.Context) []User
 	UpdateUserStatus(ctx context.Context, id string)
-	GetUserCount() string
-	GetPageView() string
+	GetUserCount(ctx context.Context) string
+	GetPageView(ctx context.Context) string
 }

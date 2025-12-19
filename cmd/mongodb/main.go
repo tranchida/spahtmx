@@ -13,8 +13,8 @@ import (
 
 type User struct {
 	ID   bson.ObjectID `bson:"_id"`
-	Name string `bson:"name"`
-	City string `bson:"city"`
+	Name string        `bson:"name"`
+	City string        `bson:"city"`
 }
 
 func main() {
@@ -40,8 +40,8 @@ func main() {
 
 	cusers := client.Database("test").Collection("users")
 
-	cursor, err := cusers.Find(ctx, bson.D{{"city", bson.A{"Indianapolis"}}},
-		 options.Find().SetLimit(20))
+	cursor, err := cusers.Find(ctx, bson.D{},
+		options.Find().SetLimit(20))
 	if err != nil {
 		log.Fatal(err)
 	}
