@@ -32,7 +32,17 @@ func (u *UserMongo) ToDomain() domain.User {
 }
 
 func FromDomain(user domain.User) *UserMongo {
-	return nil
+
+	uid, err := bson.ObjectIDFromHex(user.ID)
+	if err != nil {
+		panic(err)
+	}
+	return &UserMongo{
+		ID:       uid,
+		Username: user.Username,
+		Email:    user.Email,
+		Status:   user.Status,
+	}
 }
 
 func (m MongoRepository) GetUsers(ctx context.Context) []domain.User {
@@ -51,8 +61,7 @@ func (m MongoRepository) GetUsers(ctx context.Context) []domain.User {
 	return domainUsers
 }
 
-func (m MongoRepository) UpdateUserStatus(ctx context.Context, id string) {
-
+func (m MongoRepository) GetUser(ctx context.Context, id string) domain.User {
 	objid, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		panic(err)
@@ -63,8 +72,19 @@ func (m MongoRepository) UpdateUserStatus(ctx context.Context, id string) {
 	if err != nil {
 		panic(err)
 	}
-	u.Status = !u.Status
-	_, err = m.DB.Collection("users").ReplaceOne(ctx, bson.D{{"_id", u.ID}}, u)
+	return u.ToDomain()
+}
+
+func (m MongoRepository) CreateUser(ctx context.Context, user domain.User) {
+	_, err := m.DB.Collection("users").InsertOne(ctx, FromDomain(user))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (m MongoRepository) UpdateUser(ctx context.Context, user domain.User) {
+	u := FromDomain(user)
+	_, err := m.DB.Collection("users").ReplaceOne(ctx, bson.D{{"_id", u.ID}}, u)
 	if err != nil {
 		panic(err)
 	}

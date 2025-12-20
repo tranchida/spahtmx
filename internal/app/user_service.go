@@ -20,13 +20,15 @@ func (s *UserService) GetUsers(ctx context.Context) []domain.User {
 }
 
 func (s *UserService) UpdateUserStatus(ctx context.Context, id string) {
-	s.repo.UpdateUserStatus(ctx, id)
+	u := s.repo.GetUser(ctx, id)
+	u.Status = !u.Status
+	s.repo.UpdateUser(ctx, u)
 }
 
 func (s *UserService) GetUserCount(ctx context.Context) string {
-	return s.repo.GetUserCount(ctx)
+	return "1234"
 }
 
 func (s *UserService) GetPageView(ctx context.Context) string {
-	return s.repo.GetPageView(ctx)
+	return "1212121"
 }

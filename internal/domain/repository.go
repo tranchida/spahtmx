@@ -4,7 +4,7 @@ import "context"
 
 type UserRepository interface {
 	GetUsers(ctx context.Context) []User
-	UpdateUserStatus(ctx context.Context, id string)
-	GetUserCount(ctx context.Context) string
-	GetPageView(ctx context.Context) string
+	GetUser(ctx context.Context, id string) User
+	CreateUser(ctx context.Context, user User)
+	UpdateUser(ctx context.Context, user User)
 }
