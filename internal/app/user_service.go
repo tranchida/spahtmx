@@ -20,6 +20,9 @@ func (s *UserService) GetUsers(ctx context.Context) ([]domain.User, error) {
 }
 
 func (s *UserService) UpdateUserStatus(ctx context.Context, id string) error {
+	if id == "" {
+		return domain.ErrInvalidInput
+	}
 	u, err := s.repo.GetUser(ctx, id)
 	if err != nil {
 		return err

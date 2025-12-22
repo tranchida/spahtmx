@@ -2,11 +2,13 @@ package web
 
 import (
 	"context"
+	"errors"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"spahtmx/internal/adapter/web/templates"
 	"spahtmx/internal/app"
+	"spahtmx/internal/domain"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
@@ -39,7 +41,7 @@ func (h *Handler) HandleAdminPage(c echo.Context) error {
 
 	users, err := h.service.GetUsers(c.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users").SetInternal(err)
+		return translateError(err)
 	}
 	usersCount := h.service.GetUserCount(c.Request().Context())
 	pageViews := h.service.GetPageView(c.Request().Context())
@@ -55,15 +57,25 @@ func (h *Handler) HandleUserStatusSwitch(c echo.Context) error {
 
 	id := c.Param("id")
 	if err := h.service.UpdateUserStatus(c.Request().Context(), id); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user status").SetInternal(err)
+		return translateError(err)
 	}
 
 	users, err := h.service.GetUsers(c.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users").SetInternal(err)
+		return translateError(err)
 	}
 
 	return handlePage(c, RouteAdmin, templates.Userlist(users))
+}
+
+func translateError(err error) error {
+	if errors.Is(err, domain.ErrUserNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "User not found")
+	}
+	if errors.Is(err, domain.ErrInvalidInput) {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid input")
+	}
+	return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 }
 
 func handlePage(c echo.Context, page string, contents templ.Component) error {
@@ -83,7 +95,7 @@ func handlePage(c echo.Context, page string, contents templ.Component) error {
 	}
 
 	if err := component.Render(c.Request().Context(), c.Response().Writer); err != nil {
-		log.Printf("Erreur lors du rendu: %v", err)
+		slog.Error("Render error", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Erreur de rendu").SetInternal(err)
 	}
 	return nil

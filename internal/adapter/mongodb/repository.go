@@ -2,7 +2,10 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 	"spahtmx/internal/domain"
+
+	"log/slog"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -68,13 +71,17 @@ func (m MongoRepository) GetUsers(ctx context.Context) ([]domain.User, error) {
 func (m MongoRepository) GetUser(ctx context.Context, id string) (domain.User, error) {
 	objid, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return domain.User{}, err
+		return domain.User{}, domain.ErrInvalidInput
 	}
 	user := m.DB.Collection("users").FindOne(ctx, bson.D{{Key: "_id", Value: objid}}, nil)
 	var u UserMongo
 	err = user.Decode(&u)
 	if err != nil {
-		return domain.User{}, err
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return domain.User{}, domain.ErrUserNotFound
+		}
+		slog.Error("Database error in GetUser", "error", err, "id", id)
+		return domain.User{}, domain.ErrInternal
 	}
 	return u.ToDomain(), nil
 }
