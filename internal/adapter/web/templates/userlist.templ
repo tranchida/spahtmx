@@ -1,10 +1,10 @@
 package templates
 
 import (
-    "spahtmx/internal/model"
+    "spahtmx/internal/domain"
 )
 
-templ Userlist(users []model.User) {
+templ Userlist(users []domain.User) {
 
 <div id="userlist">
     for _, user := range users {

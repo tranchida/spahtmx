@@ -1,30 +1,42 @@
-FROM golang:1.25 AS builder
+# Stage 1: Build
+FROM docker.io/golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
-COPY go.mod go.sum ./
+# Installer les dépendances système
+RUN apk add --no-cache git make
+
+# Copier les fichiers du module Go
+COPY go.mod go.sum* ./
+
+# Télécharger les dépendances
 RUN go mod download
 
-# Copy source code
+# Copier le code source
 COPY . .
 
-# Generate templates using the tool directive (Go 1.24+)
-RUN go tool templ generate
+# Générer les templates templ
+RUN go install github.com/a-h/templ/cmd/templ@latest && templ generate
 
-# Build the application
-# CGO_ENABLED=1 is required for go-sqlite3
-RUN CGO_ENABLED=1 GOOS=linux go build -o app main.go
+# Compiler l'application
+RUN RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o bin/app main.go
 
-# Runtime stage
-FROM debian:bookworm-slim
+# Stage 2: Runtime
+FROM docker.io/alpine:latest
 
 WORKDIR /app
 
-COPY --from=builder /app/app .
+# Installer les dépendances runtime (si nécessaire)
+RUN apk add --no-cache ca-certificates
 
-# Expose the application port
+# Copier l'application compilée depuis le builder
+COPY --from=builder /app/bin/app .
+
+# Copier les ressources statiques
+COPY --from=builder /app/static ./static
+
+# Exposer le port (adapter selon vos besoins)
 EXPOSE 8080
 
-# Run the application
+# Lancer l'application
 CMD ["./app"]
