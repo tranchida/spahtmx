@@ -37,7 +37,10 @@ func (h *Handler) HandleIndexPage(c echo.Context) error {
 
 func (h *Handler) HandleAdminPage(c echo.Context) error {
 
-	users := h.service.GetUsers(c.Request().Context())
+	users, err := h.service.GetUsers(c.Request().Context())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users").SetInternal(err)
+	}
 	usersCount := h.service.GetUserCount(c.Request().Context())
 	pageViews := h.service.GetPageView(c.Request().Context())
 
@@ -51,9 +54,16 @@ func (h *Handler) HandleAboutPage(c echo.Context) error {
 func (h *Handler) HandleUserStatusSwitch(c echo.Context) error {
 
 	id := c.Param("id")
-	h.service.UpdateUserStatus(c.Request().Context(), id)
+	if err := h.service.UpdateUserStatus(c.Request().Context(), id); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user status").SetInternal(err)
+	}
 
-	return handlePage(c, RouteAdmin, templates.Userlist(h.service.GetUsers(c.Request().Context())))
+	users, err := h.service.GetUsers(c.Request().Context())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch users").SetInternal(err)
+	}
+
+	return handlePage(c, RouteAdmin, templates.Userlist(users))
 }
 
 func handlePage(c echo.Context, page string, contents templ.Component) error {
@@ -74,7 +84,7 @@ func handlePage(c echo.Context, page string, contents templ.Component) error {
 
 	if err := component.Render(c.Request().Context(), c.Response().Writer); err != nil {
 		log.Printf("Erreur lors du rendu: %v", err)
-		http.Error(c.Response().Writer, "Erreur interne", http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Erreur de rendu").SetInternal(err)
 	}
 	return nil
 }

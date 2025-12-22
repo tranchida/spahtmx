@@ -31,63 +31,70 @@ func (u *UserMongo) ToDomain() domain.User {
 
 }
 
-func FromDomain(user domain.User) *UserMongo {
+func FromDomain(user domain.User) (*UserMongo, error) {
 
 	uid, err := bson.ObjectIDFromHex(user.ID)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return &UserMongo{
 		ID:       uid,
 		Username: user.Username,
 		Email:    user.Email,
 		Status:   user.Status,
-	}
+	}, nil
 }
 
-func (m MongoRepository) GetUsers(ctx context.Context) []domain.User {
-	//TODO implement me
-	users, err := m.DB.Collection("users").Find(ctx, bson.D{}, options.Find().SetLimit(10))
+func (m MongoRepository) GetUsers(ctx context.Context) ([]domain.User, error) {
+	cursor, err := m.DB.Collection("users").Find(ctx, bson.D{}, options.Find().SetLimit(10))
 	if err != nil {
-		panic(err)
-
+		return nil, err
 	}
+	defer cursor.Close(ctx)
+
 	var u []UserMongo
-	err = users.All(context.Background(), &u)
+	err = cursor.All(ctx, &u)
+	if err != nil {
+		return nil, err
+	}
+
 	var domainUsers []domain.User
 	for _, user := range u {
 		domainUsers = append(domainUsers, user.ToDomain())
 	}
-	return domainUsers
+	return domainUsers, nil
 }
 
-func (m MongoRepository) GetUser(ctx context.Context, id string) domain.User {
+func (m MongoRepository) GetUser(ctx context.Context, id string) (domain.User, error) {
 	objid, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		panic(err)
+		return domain.User{}, err
 	}
-	user := m.DB.Collection("users").FindOne(ctx, bson.D{{"_id", objid}}, nil)
+	user := m.DB.Collection("users").FindOne(ctx, bson.D{{Key: "_id", Value: objid}}, nil)
 	var u UserMongo
 	err = user.Decode(&u)
 	if err != nil {
-		panic(err)
+		return domain.User{}, err
 	}
-	return u.ToDomain()
+	return u.ToDomain(), nil
 }
 
-func (m MongoRepository) CreateUser(ctx context.Context, user domain.User) {
-	_, err := m.DB.Collection("users").InsertOne(ctx, FromDomain(user))
+func (m MongoRepository) CreateUser(ctx context.Context, user domain.User) error {
+	um, err := FromDomain(user)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	_, err = m.DB.Collection("users").InsertOne(ctx, um)
+	return err
 }
 
-func (m MongoRepository) UpdateUser(ctx context.Context, user domain.User) {
-	u := FromDomain(user)
-	_, err := m.DB.Collection("users").ReplaceOne(ctx, bson.D{{"_id", u.ID}}, u)
+func (m MongoRepository) UpdateUser(ctx context.Context, user domain.User) error {
+	u, err := FromDomain(user)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	_, err = m.DB.Collection("users").ReplaceOne(ctx, bson.D{{Key: "_id", Value: u.ID}}, u)
+	return err
 }
 
 func (m MongoRepository) GetUserCount(ctx context.Context) string {

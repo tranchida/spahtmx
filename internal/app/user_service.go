@@ -15,14 +15,17 @@ func NewUserService(r domain.UserRepository) *UserService {
 	}
 }
 
-func (s *UserService) GetUsers(ctx context.Context) []domain.User {
+func (s *UserService) GetUsers(ctx context.Context) ([]domain.User, error) {
 	return s.repo.GetUsers(ctx)
 }
 
-func (s *UserService) UpdateUserStatus(ctx context.Context, id string) {
-	u := s.repo.GetUser(ctx, id)
+func (s *UserService) UpdateUserStatus(ctx context.Context, id string) error {
+	u, err := s.repo.GetUser(ctx, id)
+	if err != nil {
+		return err
+	}
 	u.Status = !u.Status
-	s.repo.UpdateUser(ctx, u)
+	return s.repo.UpdateUser(ctx, u)
 }
 
 func (s *UserService) GetUserCount(ctx context.Context) string {
