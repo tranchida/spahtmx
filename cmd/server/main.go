@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -11,6 +13,7 @@ import (
 	"spahtmx/internal/adapter/web"
 	"spahtmx/internal/app"
 	"spahtmx/internal/config"
+	"spahtmx/internal/domain"
 	"syscall"
 	"time"
 
@@ -34,13 +37,19 @@ func main() {
 		}
 	}()
 
-	repo := mongodb.MongoRepository{
+	userRepo := mongodb.UserMongoRepository{
 		DB: db,
 	}
 
-	userService := app.NewUserService(repo)
+	userService := app.NewUserService(userRepo)
 
-	e := initWeb(*userService)
+	prizeRepo := mongodb.PrizeMongoRepository{
+		DB: db,
+	}
+
+	prizeService := app.NewPrizeService(prizeRepo)
+
+	e := initWeb(userService, prizeService)
 
 	// Démarrage du serveur dans une goroutine
 	go func() {
@@ -84,13 +93,14 @@ func initDB(ctx context.Context, cfg *config.Config) (*mongo.Database, *mongo.Cl
 
 	// Seed data (Optionnel pour le dev)
 	if cfg.SeedDB {
-		seedDatabase(ctx, db)
+		seedUserDatabase(ctx, db)
+		seedPrizeDatabase(ctx, db)
 	}
 
 	return db, client
 }
 
-func seedDatabase(ctx context.Context, db *mongo.Database) {
+func seedUserDatabase(ctx context.Context, db *mongo.Database) {
 	us := []mongodb.UserMongo{
 		{ID: bson.NewObjectID(), Username: "alice", Email: "alice@fake.com", Status: true},
 		{ID: bson.NewObjectID(), Username: "bob", Email: "bob@fake.com", Status: false},
@@ -106,11 +116,52 @@ func seedDatabase(ctx context.Context, db *mongo.Database) {
 		slog.Error("Failed to insert users", "error", err)
 		os.Exit(1)
 	}
+
 	slog.Info("Database seeded successfully")
 }
 
-func initWeb(userService app.UserService) *echo.Echo {
-	handler := web.NewHandler(userService)
+func seedPrizeDatabase(ctx context.Context, db *mongo.Database) {
+
+	data, err := os.ReadFile("nobel-prize.json")
+	if err != nil {
+		slog.Error("failed to read novel-prize.json: ", err)
+	}
+
+	var pl domain.PrizeList
+	if err := json.Unmarshal(data, &pl); err != nil {
+		slog.Error("failed to unmarshal JSON: %v", err)
+	}
+
+	prizes := pl.Prizes
+	fmt.Printf("Loaded %d prizes\n", len(prizes))
+	for i, p := range prizes {
+		fmt.Printf("%d: %s - %s (laureates: %d)\n", i+1, p.Year, p.Category, len(p.Laureates))
+	}
+
+	coll := db.Collection("prize")
+
+	var docs []mongodb.PrizeMongo
+	for _, p := range prizes {
+		doc, err := mongodb.FromPrizeDomain(p)
+		if err != nil {
+			slog.Error("failed to convert prize domain to mongo: %v", err)
+			continue
+		}
+		docs = append(docs, *doc)
+	}
+
+	if len(docs) > 0 {
+		res, err := coll.InsertMany(ctx, docs)
+		if err != nil {
+			slog.Error("failed to insert documents: %v", err)
+		}
+		fmt.Printf("Inserted %d documents\n", len(res.InsertedIDs))
+	}
+
+}
+
+func initWeb(userService *app.UserService, prizeService *app.PrizeService) *echo.Echo {
+	handler := web.NewHandler(userService, prizeService)
 
 	e := echo.New()
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{

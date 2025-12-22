@@ -24,12 +24,14 @@ const (
 )
 
 type Handler struct {
-	service app.UserService
+	userService  *app.UserService
+	prizeService *app.PrizeService
 }
 
-func NewHandler(userService app.UserService) *Handler {
+func NewHandler(userService *app.UserService, prizeService *app.PrizeService) *Handler {
 	return &Handler{
-		service: userService,
+		userService:  userService,
+		prizeService: prizeService,
 	}
 }
 
@@ -39,12 +41,12 @@ func (h *Handler) HandleIndexPage(c echo.Context) error {
 
 func (h *Handler) HandleAdminPage(c echo.Context) error {
 
-	users, err := h.service.GetUsers(c.Request().Context())
+	users, err := h.userService.GetUsers(c.Request().Context())
 	if err != nil {
 		return translateError(err)
 	}
-	usersCount := h.service.GetUserCount(c.Request().Context())
-	pageViews := h.service.GetPageView(c.Request().Context())
+	usersCount := h.userService.GetUserCount(c.Request().Context())
+	pageViews := h.userService.GetPageView(c.Request().Context())
 
 	return handlePage(c, RouteAdmin, templates.Admin(users, usersCount, pageViews))
 }
@@ -56,11 +58,11 @@ func (h *Handler) HandleAboutPage(c echo.Context) error {
 func (h *Handler) HandleUserStatusSwitch(c echo.Context) error {
 
 	id := c.Param("id")
-	if err := h.service.UpdateUserStatus(c.Request().Context(), id); err != nil {
+	if err := h.userService.UpdateUserStatus(c.Request().Context(), id); err != nil {
 		return translateError(err)
 	}
 
-	users, err := h.service.GetUsers(c.Request().Context())
+	users, err := h.userService.GetUsers(c.Request().Context())
 	if err != nil {
 		return translateError(err)
 	}
