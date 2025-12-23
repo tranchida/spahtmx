@@ -88,7 +88,7 @@ func FromPrizeDomain(prize domain.Prize) (*PrizeMongo, error) {
 }
 
 func (m PrizeMongoRepository) GetPrizes(ctx context.Context) ([]domain.Prize, error) {
-	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{}, options.Find().SetLimit(10))
+	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{}, options.Find())
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (m PrizeMongoRepository) GetPrize(ctx context.Context, id string) (domain.P
 }
 
 func (m PrizeMongoRepository) GetPrizesByYear(ctx context.Context, year string) ([]domain.Prize, error) {
-	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{{Key: "year", Value: year}}, options.Find().SetLimit(10))
+	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{{Key: "year", Value: year}}, options.Find())
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (m PrizeMongoRepository) GetPrizesByYear(ctx context.Context, year string) 
 }
 
 func (m PrizeMongoRepository) GetPrizesByCategory(ctx context.Context, category string) ([]domain.Prize, error) {
-	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{{Key: "category", Value: category}}, options.Find().SetLimit(10))
+	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{{Key: "category", Value: category}}, options.Find())
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func (m PrizeMongoRepository) GetPrizesByCategory(ctx context.Context, category 
 }
 
 func (m PrizeMongoRepository) GetPrizesByCategoryAndYear(ctx context.Context, category string, year string) ([]domain.Prize, error) {
-	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{{Key: "category", Value: category}, {Key: "year", Value: year}}, options.Find().SetLimit(10))
+	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{{Key: "category", Value: category}, {Key: "year", Value: year}}, options.Find())
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,8 @@ import (
 	"spahtmx/internal/adapter/web/templates"
 	"spahtmx/internal/app"
 	"spahtmx/internal/domain"
+	"strconv"
+	"time"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
@@ -86,7 +88,8 @@ func (h *Handler) HandlePrizePage(c echo.Context) error {
 	} else if year != "" {
 		prizes, err = h.prizeService.GetPrizesByYear(c.Request().Context(), year)
 	} else {
-		prizes, err = h.prizeService.GetPrizes(c.Request().Context())
+		currentYear := strconv.Itoa(time.Now().Year())
+		prizes, err = h.prizeService.GetPrizesByYear(c.Request().Context(), currentYear)
 	}
 
 	if err != nil {
