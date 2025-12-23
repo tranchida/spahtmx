@@ -32,7 +32,7 @@ func Nav(page string) templ.Component {
 		selectClass := "text-secondary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5"
 		unselectClass := "text-primary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5"
 
-		indexClass, adminClass, aboutClass := unselectClass, unselectClass, unselectClass
+		indexClass, adminClass, aboutClass, prizeClass := unselectClass, unselectClass, unselectClass, unselectClass
 		switch page {
 		case "/":
 			indexClass = selectClass
@@ -40,6 +40,8 @@ func Nav(page string) templ.Component {
 			adminClass = selectClass
 		case "/about":
 			aboutClass = selectClass
+		case "/prize":
+			prizeClass = selectClass
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<nav id=\"navigation\" class=\"bg-white/95 shadow-lg sticky top-0 z-50\" hx-swap-oob=\"true\"><div class=\"container mx-auto px-6 py-4\"><div class=\"flex justify-center space-x-8\">")
 		if templ_7745c5c3_Err != nil {
@@ -67,12 +69,12 @@ func Nav(page string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var4 = []any{adminClass}
+		var templ_7745c5c3_Var4 = []any{prizeClass}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var4...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<a href=\"/admin\" hx-get=\"/admin\" hx-target=\"#content\" hx-push-url=\"/admin\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<a href=\"/prize\" hx-get=\"/prize\" hx-target=\"#content\" hx-push-url=\"/prize\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -85,16 +87,16 @@ func Nav(page string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\">Admin</a> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\">Nobel prize</a> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var6 = []any{aboutClass}
+		var templ_7745c5c3_Var6 = []any{adminClass}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var6...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<a href=\"/about\" hx-get=\"/about\" hx-target=\"#content\" hx-push-url=\"/about\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<a href=\"/admin\" hx-get=\"/admin\" hx-target=\"#content\" hx-push-url=\"/admin\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -107,7 +109,29 @@ func Nav(page string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\">A propos</a></div></div></nav>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\">Admin</a> ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var8 = []any{aboutClass}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var8...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<a href=\"/about\" hx-get=\"/about\" hx-target=\"#content\" hx-push-url=\"/about\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var8).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/adapter/web/templates/nav.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\">A propos</a></div></div></nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

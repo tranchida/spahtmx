@@ -8,4 +8,4 @@ dev:
 	@make -j2 templ air
 
 build:
-	@go build -o bin/app main.go
+	@go build -o bin/app cmd/server/main.go

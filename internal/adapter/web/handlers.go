@@ -6,9 +6,12 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"sort"
 	"spahtmx/internal/adapter/web/templates"
 	"spahtmx/internal/app"
 	"spahtmx/internal/domain"
+	"strconv"
+	"time"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
@@ -19,17 +22,20 @@ const (
 	RouteAdmin  = "/admin"
 	RouteAbout  = "/about"
 	RouteStatus = "/status"
+	RoutePrize  = "/prize"
 	RouteSwitch = "/api/switch/:id"
 	RouteStatic = "/static"
 )
 
 type Handler struct {
-	service app.UserService
+	userService  *app.UserService
+	prizeService *app.PrizeService
 }
 
-func NewHandler(userService app.UserService) *Handler {
+func NewHandler(userService *app.UserService, prizeService *app.PrizeService) *Handler {
 	return &Handler{
-		service: userService,
+		userService:  userService,
+		prizeService: prizeService,
 	}
 }
 
@@ -39,12 +45,12 @@ func (h *Handler) HandleIndexPage(c echo.Context) error {
 
 func (h *Handler) HandleAdminPage(c echo.Context) error {
 
-	users, err := h.service.GetUsers(c.Request().Context())
+	users, err := h.userService.GetUsers(c.Request().Context())
 	if err != nil {
 		return translateError(err)
 	}
-	usersCount := h.service.GetUserCount(c.Request().Context())
-	pageViews := h.service.GetPageView(c.Request().Context())
+	usersCount := h.userService.GetUserCount(c.Request().Context())
+	pageViews := h.userService.GetPageView(c.Request().Context())
 
 	return handlePage(c, RouteAdmin, templates.Admin(users, usersCount, pageViews))
 }
@@ -56,16 +62,53 @@ func (h *Handler) HandleAboutPage(c echo.Context) error {
 func (h *Handler) HandleUserStatusSwitch(c echo.Context) error {
 
 	id := c.Param("id")
-	if err := h.service.UpdateUserStatus(c.Request().Context(), id); err != nil {
+	if err := h.userService.UpdateUserStatus(c.Request().Context(), id); err != nil {
 		return translateError(err)
 	}
 
-	users, err := h.service.GetUsers(c.Request().Context())
+	users, err := h.userService.GetUsers(c.Request().Context())
 	if err != nil {
 		return translateError(err)
 	}
 
 	return handlePage(c, RouteAdmin, templates.Userlist(users))
+}
+
+func (h *Handler) HandlePrizePage(c echo.Context) error {
+	category := c.QueryParam("category")
+	year := c.QueryParam("year")
+
+	var prizes []domain.Prize
+	var err error
+
+	if category != "" && year != "" {
+		prizes, err = h.prizeService.GetPrizesByCategoryAndYear(c.Request().Context(), category, year)
+	} else if category != "" {
+		prizes, err = h.prizeService.GetPrizesByCategory(c.Request().Context(), category)
+	} else if year != "" {
+		prizes, err = h.prizeService.GetPrizesByYear(c.Request().Context(), year)
+	} else {
+		currentYear := strconv.Itoa(time.Now().Year())
+		prizes, err = h.prizeService.GetPrizesByYear(c.Request().Context(), currentYear)
+	}
+
+	if err != nil {
+		return translateError(err)
+	}
+
+	categories, err := h.prizeService.GetCategories(c.Request().Context())
+	if err != nil {
+		return translateError(err)
+	}
+	years, err := h.prizeService.GetYears(c.Request().Context())
+	if err != nil {
+		return translateError(err)
+	}
+
+	sort.Strings(categories)
+	sort.Slice(years, func(i, j int) bool { return years[i] > years[j] })
+
+	return handlePage(c, RoutePrize, templates.Prize(prizes, categories, years, category, year))
 }
 
 func translateError(err error) error {

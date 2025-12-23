@@ -6,7 +6,7 @@ templ Nav(page string) {
         selectClass := "text-secondary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5" 
         unselectClass := "text-primary font-semibold px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-0.5" 
 
-        indexClass, adminClass, aboutClass := unselectClass, unselectClass, unselectClass
+        indexClass, adminClass, aboutClass, prizeClass := unselectClass, unselectClass, unselectClass, unselectClass
         switch page {
             case "/":
                 indexClass = selectClass
@@ -14,6 +14,8 @@ templ Nav(page string) {
                 adminClass = selectClass
             case "/about":
                 aboutClass = selectClass
+			case "/prize":
+				prizeClass = selectClass
         }
 
     }}
@@ -27,6 +29,12 @@ templ Nav(page string) {
 					hx-target="#content"
 					hx-push-url="/"
 					class={indexClass}>Accueil</a>
+					<a
+					href="/prize"
+					hx-get="/prize"
+					hx-target="#content"
+					hx-push-url="/prize"
+					class={prizeClass}>Nobel prize</a>
 				<a
 					href="/admin"
 					hx-get="/admin"

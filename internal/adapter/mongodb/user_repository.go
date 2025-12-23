@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-type MongoRepository struct {
+type UserMongoRepository struct {
 	DB *mongo.Database
 }
 
@@ -23,7 +23,7 @@ type UserMongo struct {
 	Status   bool          `bson:"status"`
 }
 
-func (u *UserMongo) ToDomain() domain.User {
+func ToUserDomain(u UserMongo) domain.User {
 
 	return domain.User{
 		ID:       u.ID.Hex(),
@@ -34,7 +34,7 @@ func (u *UserMongo) ToDomain() domain.User {
 
 }
 
-func FromDomain(user domain.User) (*UserMongo, error) {
+func FromUserDomain(user domain.User) (*UserMongo, error) {
 
 	uid, err := bson.ObjectIDFromHex(user.ID)
 	if err != nil {
@@ -48,7 +48,7 @@ func FromDomain(user domain.User) (*UserMongo, error) {
 	}, nil
 }
 
-func (m MongoRepository) GetUsers(ctx context.Context) ([]domain.User, error) {
+func (m UserMongoRepository) GetUsers(ctx context.Context) ([]domain.User, error) {
 	cursor, err := m.DB.Collection("users").Find(ctx, bson.D{}, options.Find().SetLimit(10))
 	if err != nil {
 		return nil, err
@@ -63,12 +63,12 @@ func (m MongoRepository) GetUsers(ctx context.Context) ([]domain.User, error) {
 
 	var domainUsers []domain.User
 	for _, user := range u {
-		domainUsers = append(domainUsers, user.ToDomain())
+		domainUsers = append(domainUsers, ToUserDomain(user))
 	}
 	return domainUsers, nil
 }
 
-func (m MongoRepository) GetUser(ctx context.Context, id string) (domain.User, error) {
+func (m UserMongoRepository) GetUser(ctx context.Context, id string) (domain.User, error) {
 	objid, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		return domain.User{}, domain.ErrInvalidInput
@@ -83,11 +83,12 @@ func (m MongoRepository) GetUser(ctx context.Context, id string) (domain.User, e
 		slog.Error("Database error in GetUser", "error", err, "id", id)
 		return domain.User{}, domain.ErrInternal
 	}
-	return u.ToDomain(), nil
+	return ToUserDomain(u), nil
 }
 
-func (m MongoRepository) CreateUser(ctx context.Context, user domain.User) error {
-	um, err := FromDomain(user)
+func (m UserMongoRepository) CreateUser(ctx context.Context, user domain.User) error {
+
+	um, err := FromUserDomain(user)
 	if err != nil {
 		return err
 	}
@@ -95,19 +96,20 @@ func (m MongoRepository) CreateUser(ctx context.Context, user domain.User) error
 	return err
 }
 
-func (m MongoRepository) UpdateUser(ctx context.Context, user domain.User) error {
-	u, err := FromDomain(user)
+func (m UserMongoRepository) UpdateUser(ctx context.Context, user domain.User) error {
+
+	um, err := FromUserDomain(user)
 	if err != nil {
 		return err
 	}
-	_, err = m.DB.Collection("users").ReplaceOne(ctx, bson.D{{Key: "_id", Value: u.ID}}, u)
+	_, err = m.DB.Collection("users").ReplaceOne(ctx, bson.D{{Key: "_id", Value: um.ID}}, um)
 	return err
 }
 
-func (m MongoRepository) GetUserCount(ctx context.Context) string {
+func (m UserMongoRepository) GetUserCount(ctx context.Context) string {
 	return "210"
 }
 
-func (m MongoRepository) GetPageView(ctx context.Context) string {
+func (m UserMongoRepository) GetPageView(ctx context.Context) string {
 	return "12345"
 }
