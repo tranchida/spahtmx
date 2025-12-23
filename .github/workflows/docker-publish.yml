@@ -113,9 +113,9 @@ jobs:
           script: |
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
             echo "--- Pulling latest Docker image ---"
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
             echo "--- Stopping and removing existing container (if any) ---"
             docker stop spahtmx || true
             docker rm spahtmx || true
             echo "--- Starting new container ---"
-            docker run -d --name spahtmx -p 8080:8080 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            docker run -d --name spahtmx -p 8080:8080 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
