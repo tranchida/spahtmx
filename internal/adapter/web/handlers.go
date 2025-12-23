@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"sort"
 	"spahtmx/internal/adapter/web/templates"
 	"spahtmx/internal/app"
 	"spahtmx/internal/domain"
@@ -72,11 +73,39 @@ func (h *Handler) HandleUserStatusSwitch(c echo.Context) error {
 }
 
 func (h *Handler) HandlePrizePage(c echo.Context) error {
-	prizes, err := h.prizeService.GetPrizes(c.Request().Context())
+	category := c.QueryParam("category")
+	year := c.QueryParam("year")
+
+	var prizes []domain.Prize
+	var err error
+
+	if category != "" && year != "" {
+		prizes, err = h.prizeService.GetPrizesByCategoryAndYear(c.Request().Context(), category, year)
+	} else if category != "" {
+		prizes, err = h.prizeService.GetPrizesByCategory(c.Request().Context(), category)
+	} else if year != "" {
+		prizes, err = h.prizeService.GetPrizesByYear(c.Request().Context(), year)
+	} else {
+		prizes, err = h.prizeService.GetPrizes(c.Request().Context())
+	}
+
 	if err != nil {
 		return translateError(err)
 	}
-	return handlePage(c, RoutePrize, templates.Prize(prizes))
+
+	categories, err := h.prizeService.GetCategories(c.Request().Context())
+	if err != nil {
+		return translateError(err)
+	}
+	years, err := h.prizeService.GetYears(c.Request().Context())
+	if err != nil {
+		return translateError(err)
+	}
+
+	sort.Strings(categories)
+	sort.Slice(years, func(i, j int) bool { return years[i] > years[j] })
+
+	return handlePage(c, RoutePrize, templates.Prize(prizes, categories, years, category, year))
 }
 
 func translateError(err error) error {

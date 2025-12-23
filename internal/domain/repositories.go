@@ -12,5 +12,9 @@ type UserRepository interface {
 type PrizeRepository interface {
 	GetPrizes(ctx context.Context) ([]Prize, error)
 	GetPrize(ctx context.Context, id string) (Prize, error)
-	InsertPrizes(ctx context.Context, prizes []Prize) error
+	GetPrizesByYear(ctx context.Context, year string) ([]Prize, error)
+	GetPrizesByCategory(ctx context.Context, category string) ([]Prize, error)
+	GetPrizesByCategoryAndYear(ctx context.Context, category string, year string) ([]Prize, error)
+	GetCategories(ctx context.Context) ([]string, error)
+	GetYears(ctx context.Context) ([]string, error)
 }

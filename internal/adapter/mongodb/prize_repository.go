@@ -125,7 +125,80 @@ func (m PrizeMongoRepository) GetPrize(ctx context.Context, id string) (domain.P
 	return ToPrizeDomain(p), nil
 }
 
-func (m PrizeMongoRepository) InsertPrizes(ctx context.Context, prizes []domain.Prize) error {
-	//TODO implement me
-	panic("implement me")
+func (m PrizeMongoRepository) GetPrizesByYear(ctx context.Context, year string) ([]domain.Prize, error) {
+	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{{Key: "year", Value: year}}, options.Find().SetLimit(10))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var u []PrizeMongo
+	err = cursor.All(ctx, &u)
+	if err != nil {
+		return nil, err
+	}
+
+	var domainPrizes []domain.Prize
+	for _, prize := range u {
+		domainPrizes = append(domainPrizes, ToPrizeDomain(prize))
+	}
+	return domainPrizes, nil
+}
+
+func (m PrizeMongoRepository) GetPrizesByCategory(ctx context.Context, category string) ([]domain.Prize, error) {
+	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{{Key: "category", Value: category}}, options.Find().SetLimit(10))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var u []PrizeMongo
+	err = cursor.All(ctx, &u)
+	if err != nil {
+		return nil, err
+	}
+
+	var domainPrizes []domain.Prize
+	for _, prize := range u {
+		domainPrizes = append(domainPrizes, ToPrizeDomain(prize))
+	}
+	return domainPrizes, nil
+}
+
+func (m PrizeMongoRepository) GetPrizesByCategoryAndYear(ctx context.Context, category string, year string) ([]domain.Prize, error) {
+	cursor, err := m.DB.Collection("prize").Find(ctx, bson.D{{Key: "category", Value: category}, {Key: "year", Value: year}}, options.Find().SetLimit(10))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var u []PrizeMongo
+	err = cursor.All(ctx, &u)
+	if err != nil {
+		return nil, err
+	}
+
+	var domainPrizes []domain.Prize
+	for _, prize := range u {
+		domainPrizes = append(domainPrizes, ToPrizeDomain(prize))
+	}
+	return domainPrizes, nil
+}
+
+func (m PrizeMongoRepository) GetCategories(ctx context.Context) ([]string, error) {
+	var categories []string
+	err := m.DB.Collection("prize").Distinct(ctx, "category", bson.D{}).Decode(&categories)
+	if err != nil {
+		return nil, err
+	}
+	return categories, nil
+}
+
+func (m PrizeMongoRepository) GetYears(ctx context.Context) ([]string, error) {
+	var years []string
+	err := m.DB.Collection("prize").Distinct(ctx, "year", bson.D{}).Decode(&years)
+	if err != nil {
+		return nil, err
+	}
+	return years, nil
 }
