@@ -19,7 +19,7 @@ COPY . .
 RUN go install github.com/a-h/templ/cmd/templ@latest && templ generate
 
 # Compiler l'application
-RUN RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o bin/app main.go
+RUN RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o bin/app cmd/server/main.go
 
 # Stage 2: Runtime
 FROM docker.io/alpine:latest
