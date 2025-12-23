@@ -15,7 +15,7 @@ env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: tranchida/spahtmx:latest
+  IMAGE_NAME: tranchida/spahtmx
 
 
 jobs:
@@ -64,6 +64,12 @@ jobs:
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{github.ref == format('refs/heads/{0}', 'master')}}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
@@ -107,10 +113,9 @@ jobs:
           script: |
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
             echo "--- Pulling latest Docker image ---"
-            docker pull ghcr.io/tranchida/spahtmx:latest
-            echo "--- Stopping existing container (if running) ---"
-            docker stop spahtmx 
-            echo "--- Removing existing container ---"
-            docker rm spahtmx 
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            echo "--- Stopping and removing existing container (if any) ---"
+            docker stop spahtmx || true
+            docker rm spahtmx || true
             echo "--- Starting new container ---"
-            docker run -d --name spahtmx -p 8080:8080 ghcr.io/tranchida/spahtmx:latest
+            docker run -d --name spahtmx -p 8080:8080 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
