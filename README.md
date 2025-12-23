@@ -4,177 +4,139 @@ Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind C
 
 ## 🚀 Fonctionnalités
 
-- **3 pages** : Accueil, Admin, À propos
+- **4 pages** : Accueil, Admin, Prix Nobel, À propos
 - **Navigation SPA** : Pas de rechargement de page grâce à HTMX
 - **Templates Templ** : Rendu côté serveur avec Templ (type-safe Go templates)
 - **Design moderne** : Interface responsive avec Tailwind CSS et animations fluides
 - **Gestion d'utilisateurs** : Page admin avec liste d'utilisateurs et statistiques
+- **Prix Nobel** : Consultation des prix Nobel (données MongoDB)
 - **API interactive** : Toggle du statut utilisateur avec HTMX
+- **Base de données** : Persistance avec MongoDB
 - **Fichiers statiques embarqués** : Déploiement simplifié avec embed.FS
+- **CI/CD** : Pipeline GitHub Actions pour Docker et déploiement automatique
 
 ## 📁 Structure du projet
 
 ```
 .
-├── main.go              # Serveur HTTP et handlers
-├── go.mod               # Dépendances Go (templ, air)
+├── cmd/
+│   └── server/
+│       └── main.go      # Point d'entrée de l'application
 ├── internal/
-│   └── model/
-│       └── user.go      # Modèle User et fonctions de données
-├── templates/           # Templates Templ
-│   ├── base.templ       # Template de base avec navigation
-│   ├── nav.templ        # Composant navigation
-│   ├── footer.templ     # Composant footer
-│   ├── index.templ      # Page d'accueil
-│   ├── admin.templ      # Page admin avec statistiques
-│   ├── about.templ      # Page à propos
-│   ├── userlist.templ   # Liste d'utilisateurs
-│   └── *_templ.go       # Fichiers générés par Templ
-└── static/              # Fichiers statiques (embarqués)
-    └── js/
-        ├── htmx.min.js
-        └── tailwind.min.js
+│   ├── adapter/
+│   │   ├── mongodb/     # Implémentation des dépôts MongoDB
+│   │   └── web/         # Handlers Echo, templates et assets statiques
+│   │       ├── static/  # Fichiers JS (htmx, tailwind)
+│   │       └── templates/ # Templates Templ
+│   ├── app/             # Logique métier (Services)
+│   ├── domain/          # Modèles et interfaces (Dépôts)
+│   └── config/          # Configuration via variables d'environnement
+├── .github/workflows/   # CI/CD (Docker publish & Deploy)
+├── compose.yaml         # Configuration Docker Compose (MongoDB)
+├── Dockerfile           # Build multi-stage pour la production
+├── Makefile             # Raccourcis pour le développement
+├── go.mod               # Dépendances Go
+└── nobel-prize.json     # Données initiales pour le seed
 ```
 
 ## 🛠️ Installation et démarrage
 
-1. Assurez-vous d'avoir Go installé (version 1.25+)
+1. Assurez-vous d'avoir Go (1.23+) et Docker installés.
 
 2. Clonez le projet et accédez au répertoire :
 ```bash
+git clone <url-du-repo>
 cd spahtmx
 ```
 
-3. Installez les dépendances :
+3. Lancez la base de données MongoDB :
+```bash
+docker compose up -d
+```
+
+4. Installez les dépendances Go :
 ```bash
 go mod download
 ```
 
-4. Générez les templates Templ (si modifiés) :
+5. Générez les templates Templ :
 ```bash
 go tool templ generate
 ```
 
-5. Lancez le serveur :
+6. Lancez le serveur :
 ```bash
-go run main.go
+# Avec les variables d'environnement par défaut
+go run cmd/server/main.go
 ```
-Ou utilisez Air pour le développement avec rechargement automatique :
+Ou avec le peuplement de la base de données (Seed) :
 ```bash
-go tool air
+SEED_DB=true go run cmd/server/main.go
+```
+Ou utilisez Air pour le développement (nécessite l'installation de air) :
+```bash
+air
 ```
 
-6. Ouvrez votre navigateur à l'adresse : **http://localhost:8765**
+7. Ouvrez votre navigateur à l'adresse : **http://localhost:8080**
 
 ## 🎯 Comment ça fonctionne
 
+### Architecture
+L'application suit les principes de la **Clean Architecture** (ou Hexagonale) :
+- **Domain** : Entités et interfaces fondamentales.
+- **App** : Services orchestrant la logique métier.
+- **Adapters** : Implémentations spécifiques (MongoDB pour le stockage, Web/Echo pour l'interface).
+
 ### Architecture SPA avec HTMX
-
 L'application utilise HTMX pour créer une expérience SPA sans framework JavaScript lourd :
-
-- **Première visite** : Le serveur envoie la page HTML complète avec le layout (navbar, footer, contenu)
-- **Navigation** : Les clics sur les liens déclenchent des requêtes HTMX qui ne chargent que le contenu de la page
-- **Historique** : HTMX gère automatiquement l'historique du navigateur avec `hx-push-url`
-- **Transitions** : Animations CSS fluides lors des changements de page
+- **Navigation** : Les clics sur les liens déclenchent des requêtes AJAX (`hx-get`) qui ne chargent que le contenu de la page cible (`#main-content`).
+- **Historique** : Géré avec `hx-push-url="true"`.
+- **Rendu** : Le serveur Echo retourne soit la page complète (premier chargement), soit uniquement le fragment de contenu (navigation HTMX) grâce à une détection des headers HTMX.
 
 ### Routes
+- `/` : Accueil
+- `/admin` : Administration des utilisateurs
+- `/prizes` : Liste des prix Nobel (données MongoDB)
+- `/about` : À propos
+- `/api/switch/{id}` : Toggle du statut utilisateur
 
-**Pages complètes** (première visite ou rechargement) :
-- `/` - Page d'accueil complète
-- `/admin` - Page admin complète avec statistiques et liste d'utilisateurs
-- `/about` - Page à propos complète
+## 🎨 Développement
 
-**API HTMX** :
-- `/api/switch/{id}` - Toggle du statut d'un utilisateur (retourne la liste mise à jour)
-
-**Fichiers statiques** :
-- `/static/*` - Serveur de fichiers statiques (embarqués avec embed.FS)
-
-## 🎨 Personnalisation
-
-Lance le serveur avec Air et recompilation automatique des templates
-```Bash
-make dev 
+Utilisez le Makefile pour les tâches courantes :
+```bash
+make build   # Compile l'application
+make dev     # Lance air pour le rechargement automatique
 ```
 
-### Modifier les templates
-Les templates Templ se trouvent dans le dossier `templates/` avec l'extension `.templ` :
-- `base.templ` : Layout principal avec navigation et configuration Tailwind
-- `nav.templ`, `footer.templ` : Composants de navigation et footer
-- `index.templ`, `admin.templ`, `about.templ` : Contenu des pages
-- `userlist.templ` : Composant de liste d'utilisateurs
-
-### Personnaliser les couleurs Tailwind
-Dans `templates/base.templ`, modifiez la configuration Tailwind :
-```javascript
-tailwind.config = {
-    theme: {
-        extend: {
-            colors: {
-                primary: '#667eea',    // Couleur principale
-                secondary: '#764ba2',  // Couleur secondaire
-            }
-        }
-    }
-}
-```
-
-### Ajouter de nouvelles pages
-1. Créez un nouveau template dans `templates/` (ex: `contact.templ`)
-```go
-package templates
-
-templ Contact() {
-    <div class="bg-white rounded-xl shadow-lg p-8">
-        <h1 class="text-3xl font-bold mb-4">Contact</h1>
-        // Votre contenu ici
-    </div>
-}
-```
-2. Ajoutez la route dans `main.go` :
-```go
-http.HandleFunc("/contact", handleContactPage)
-```
-3. Implémentez le handler :
-```go
-func handleContactPage(writer http.ResponseWriter, request *http.Request) {
-    handlePage(writer, request, templates.Contact())
-}
-```
+### Configuration
+L'application se configure via des variables d'environnement :
+- `PORT` : Port d'écoute (défaut : 8080)
+- `MONGODB_URL` : URL de connexion MongoDB (défaut : mongodb://root:example@localhost:27017)
+- `SEED_DB` : Si "true", remplit la base de données au démarrage
 
 ## 📝 Technologies
 
-- **Go 1.25** - Backend et serveur HTTP natif
-- **Templ** - Templates type-safe pour Go (github.com/a-h/templ)
-- **HTMX** - Interactions AJAX sans JavaScript complexe
-- **Tailwind CSS** - Framework CSS utility-first via CDN
-- **Air** - Rechargement automatique pour le développement
-- **embed.FS** - Fichiers statiques embarqués dans le binaire
-
-## 🌟 Avantages de cette stack
-
-- ✅ **Simplicité** : Pas de build frontend complexe, pas de npm massif
-- ✅ **Type-safety** : Templ fournit des templates type-safe avec autocomplétion
-- ✅ **Performance** : Serveur Go ultra-rapide et léger
-- ✅ **SEO-friendly** : Rendu côté serveur pour toutes les pages
-- ✅ **Expérience utilisateur** : Navigation fluide comme une SPA React
-- ✅ **Maintenabilité** : Code Go pur, facile à comprendre et déboguer
-- ✅ **Production-ready** : Binaire unique avec assets embarqués, déploiement simple
-- ✅ **Hot reload** : Développement rapide avec Air
+- **Go 1.23** - Backend robuste
+- **Echo** - Framework web performant
+- **MongoDB** - Base de données NoSQL
+- **Templ** - Templates type-safe pour Go
+- **HTMX** - Frontend dynamique sans JS complexe
+- **Tailwind CSS** - Styling rapide
+- **Docker & Docker Compose** - Conteneurisation
+- **GitHub Actions** - CI/CD et déploiement continu
 
 ## 🚀 Déploiement
 
-### Compilation
-```bash
-go build -o spahtmx main.go
-```
+Le projet inclut une configuration CI/CD via GitHub Actions (`.github/workflows/docker-publish.yml`) :
+1. **Build** : À chaque push sur `master`, une image Docker est construite et poussée sur GitHub Container Registry (GHCR).
+2. **Deploy** : L'image est automatiquement déployée sur le serveur cible via SSH.
 
-### Exécution en production
+### Compilation manuelle
 ```bash
-./spahtmx
+docker build -t spahtmx .
+docker run -p 8080:8080 -e MONGODB_URL=mongodb://... spahtmx
 ```
-
-Le serveur écoute sur le port 8080. Vous pouvez modifier ce port dans `main.go` si nécessaire.
 
 ## 📄 License
 
