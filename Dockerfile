@@ -32,9 +32,6 @@ RUN apk add --no-cache ca-certificates
 # Copier l'application compilée depuis le builder
 COPY --from=builder /app/bin/app .
 
-# Copier les ressources statiques
-COPY --from=builder /app/static ./static
-
 # Exposer le port (adapter selon vos besoins)
 EXPOSE 8080
 
