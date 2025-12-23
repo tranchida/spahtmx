@@ -99,8 +99,8 @@ jobs:
     steps:
       - name: Check Secrets
         run: |
-          if [ -z "${{ secrets.SERVER_IP }}" ]; then echo "Error: SERVER_IP is not set"; exit 1; fi
           if [ -z "${{ secrets.SERVER_USER }}" ]; then echo "Error: SERVER_USER is not set"; exit 1; fi
+          if [ -z "${{ secrets.SERVER_IP }}" ]; then echo "Error: SERVER_IP is not set"; exit 1; fi
           if [ -z "${{ secrets.SERVER_PRIVATE_SSH_KEY }}" ]; then echo "Error: SERVER_PRIVATE_SSH_KEY is not set"; exit 1; fi
 
       - name: SSH and Deploy to Server
