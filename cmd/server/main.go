@@ -124,12 +124,12 @@ func seedPrizeDatabase(ctx context.Context, db *mongo.Database) {
 
 	data, err := os.ReadFile("nobel-prize.json")
 	if err != nil {
-		slog.Error("failed to read novel-prize.json: ", err)
+		slog.Error("failed to read novel-prize.json", "error", err)
 	}
 
 	var pl domain.PrizeList
 	if err := json.Unmarshal(data, &pl); err != nil {
-		slog.Error("failed to unmarshal JSON: %v", err)
+		slog.Error("failed to unmarshal JSON", "error", err)
 	}
 
 	prizes := pl.Prizes
@@ -144,7 +144,7 @@ func seedPrizeDatabase(ctx context.Context, db *mongo.Database) {
 	for _, p := range prizes {
 		doc, err := mongodb.FromPrizeDomain(p)
 		if err != nil {
-			slog.Error("failed to convert prize domain to mongo: %v", err)
+			slog.Error("failed to convert prize domain to mongo", "error", err)
 			continue
 		}
 		docs = append(docs, *doc)
@@ -153,7 +153,7 @@ func seedPrizeDatabase(ctx context.Context, db *mongo.Database) {
 	if len(docs) > 0 {
 		res, err := coll.InsertMany(ctx, docs)
 		if err != nil {
-			slog.Error("failed to insert documents: %v", err)
+			slog.Error("failed to insert documents", "error", err)
 		}
 		fmt.Printf("Inserted %d documents\n", len(res.InsertedIDs))
 	}
@@ -182,6 +182,7 @@ func initWeb(userService *app.UserService, prizeService *app.PrizeService) *echo
 	e.Use(middleware.Gzip())
 
 	e.GET(web.RouteIndex, handler.HandleIndexPage)
+	e.GET(web.RoutePrize, handler.HandlePrizePage)
 	e.GET(web.RouteAdmin, handler.HandleAdminPage)
 	e.GET(web.RouteAbout, handler.HandleAboutPage)
 	e.POST(web.RouteSwitch, handler.HandleUserStatusSwitch)

@@ -19,6 +19,7 @@ const (
 	RouteAdmin  = "/admin"
 	RouteAbout  = "/about"
 	RouteStatus = "/status"
+	RoutePrize  = "/prize"
 	RouteSwitch = "/api/switch/:id"
 	RouteStatic = "/static"
 )
@@ -68,6 +69,14 @@ func (h *Handler) HandleUserStatusSwitch(c echo.Context) error {
 	}
 
 	return handlePage(c, RouteAdmin, templates.Userlist(users))
+}
+
+func (h *Handler) HandlePrizePage(c echo.Context) error {
+	prizes, err := h.prizeService.GetPrizes(c.Request().Context())
+	if err != nil {
+		return translateError(err)
+	}
+	return handlePage(c, RoutePrize, templates.Prize(prizes))
 }
 
 func translateError(err error) error {
