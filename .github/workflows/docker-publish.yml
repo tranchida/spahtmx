@@ -118,4 +118,4 @@ jobs:
             docker stop spahtmx || true
             docker rm spahtmx || true
             echo "--- Starting new container ---"
-            docker run -d --name spahtmx -e MONGODB_URL=${{ secrets.MONGODB_URL }} -p 8080:8080 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
+            docker run -d --name spahtmx -e MONGODB_URL=${{ secrets.MONGODB_URL }} -p 127.0.0.1:8080:8080 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
