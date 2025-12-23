@@ -12,7 +12,7 @@ type Config struct {
 
 func Load() *Config {
 	return &Config{
-		Port:       getEnv("PORT", "8765"),
+		Port:       getEnv("PORT", "8080"),
 		MongoDBURL: getEnv("MONGODB_URL", "mongodb://root:example@localhost:27017"),
 		SeedDB:     getEnv("SEED_DB", "false") == "true",
 	}

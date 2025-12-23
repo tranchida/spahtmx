@@ -158,6 +158,14 @@ func seedPrizeDatabase(ctx context.Context, db *mongo.Database) {
 		fmt.Printf("Inserted %d documents\n", len(res.InsertedIDs))
 	}
 
+	_, err = coll.Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "year", Value: 1}}})
+	if err != nil {
+		slog.Error("failed to create index", "error", err)
+	}
+	_, err = coll.Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "category", Value: 1}}})
+	if err != nil {
+		slog.Error("failed to create index", "error", err)
+	}
 }
 
 func initWeb(userService *app.UserService, prizeService *app.PrizeService) *echo.Echo {
