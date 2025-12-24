@@ -22,6 +22,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -48,8 +49,9 @@ func main() {
 	}
 
 	prizeService := app.NewPrizeService(prizeRepo)
+	authService := app.NewAuthService(userRepo)
 
-	e := initWeb(userService, prizeService)
+	e := initWeb(userService, prizeService, authService)
 
 	// Démarrage du serveur dans une goroutine
 	go func() {
@@ -101,17 +103,25 @@ func initDB(ctx context.Context, cfg *config.Config) (*mongo.Database, *mongo.Cl
 }
 
 func seedUserDatabase(ctx context.Context, db *mongo.Database) {
+	// Mot de passe "password" haché : $2a$10$Un8S9v2vDqT5v.vQJ2vOLeC9L/9e6Z/v9.v/v9.v/v9.v/v9.v/v9
+	// On va utiliser bcrypt pour générer un vrai hash pour "password"
+	password := "password"
+	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
+	hashedPassword := string(bytes)
+
 	us := []mongodb.UserMongo{
-		{ID: bson.NewObjectID(), Username: "alice", Email: "alice@fake.com", Status: true},
-		{ID: bson.NewObjectID(), Username: "bob", Email: "bob@fake.com", Status: false},
-		{ID: bson.NewObjectID(), Username: "charlie", Email: "charlie@fake.com", Status: true},
+		{ID: bson.NewObjectID(), Username: "alice", Password: hashedPassword, Email: "alice@fake.com", Status: true},
+		{ID: bson.NewObjectID(), Username: "bob", Password: hashedPassword, Email: "bob@fake.com", Status: false},
+		{ID: bson.NewObjectID(), Username: "charlie", Password: hashedPassword, Email: "charlie@fake.com", Status: true},
 	}
 
-	if err := db.Drop(ctx); err != nil {
-		slog.Warn("Failed to drop database", "error", err)
+	userColl := db.Collection("users")
+	err := userColl.Drop(ctx)
+	if err != nil {
+		slog.Error("Failed to drop collection", "error", err)
 	}
 
-	_, err := db.Collection("users").InsertMany(ctx, us)
+	_, err = userColl.InsertMany(ctx, us)
 	if err != nil {
 		slog.Error("Failed to insert users", "error", err)
 		os.Exit(1)
@@ -134,11 +144,13 @@ func seedPrizeDatabase(ctx context.Context, db *mongo.Database) {
 
 	prizes := pl.Prizes
 	fmt.Printf("Loaded %d prizes\n", len(prizes))
-	for i, p := range prizes {
-		fmt.Printf("%d: %s - %s (laureates: %d)\n", i+1, p.Year, p.Category, len(p.Laureates))
-	}
 
 	coll := db.Collection("prize")
+
+	err = coll.Drop(ctx)
+	if err != nil {
+		slog.Error("failed to drop collection", "error", err)
+	}
 
 	var docs []mongodb.PrizeMongo
 	for _, p := range prizes {
@@ -168,8 +180,24 @@ func seedPrizeDatabase(ctx context.Context, db *mongo.Database) {
 	}
 }
 
-func initWeb(userService *app.UserService, prizeService *app.PrizeService) *echo.Echo {
-	handler := web.NewHandler(userService, prizeService)
+func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		cookie, err := c.Cookie("session")
+		if err != nil || cookie.Value == "" {
+			// Si c'est une requête HTMX, on peut renvoyer un header pour rediriger côté client
+			// ou simplement renvoyer vers la page de login
+			if c.Request().Header.Get("HX-Request") == "true" {
+				c.Response().Header().Set("HX-Redirect", "/login")
+				return nil
+			}
+			return c.Redirect(http.StatusSeeOther, "/login")
+		}
+		return next(c)
+	}
+}
+
+func initWeb(userService *app.UserService, prizeService *app.PrizeService, authService *app.AuthService) *echo.Echo {
+	handler := web.NewHandler(userService, prizeService, authService)
 
 	e := echo.New()
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
@@ -191,9 +219,12 @@ func initWeb(userService *app.UserService, prizeService *app.PrizeService) *echo
 
 	e.GET(web.RouteIndex, handler.HandleIndexPage)
 	e.GET(web.RoutePrize, handler.HandlePrizePage)
-	e.GET(web.RouteAdmin, handler.HandleAdminPage)
+	e.GET(web.RouteAdmin, handler.HandleAdminPage, AuthMiddleware)
 	e.GET(web.RouteAbout, handler.HandleAboutPage)
-	e.POST(web.RouteSwitch, handler.HandleUserStatusSwitch)
+	e.GET(web.RouteLogin, handler.HandleLoginPage)
+	e.POST(web.RouteLogin, handler.HandleLoginPost)
+	e.POST(web.RouteLogout, handler.HandleLogout)
+	e.POST(web.RouteSwitch, handler.HandleUserStatusSwitch, AuthMiddleware)
 	e.GET(web.RouteStatus, func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})

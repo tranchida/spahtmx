@@ -19,6 +19,7 @@ type UserMongoRepository struct {
 type UserMongo struct {
 	ID       bson.ObjectID `bson:"_id"`
 	Username string        `bson:"username"`
+	Password string        `bson:"password"`
 	Email    string        `bson:"email"`
 	Status   bool          `bson:"status"`
 }
@@ -28,6 +29,7 @@ func ToUserDomain(u UserMongo) domain.User {
 	return domain.User{
 		ID:       u.ID.Hex(),
 		Username: u.Username,
+		Password: u.Password,
 		Email:    u.Email,
 		Status:   u.Status,
 	}
@@ -43,6 +45,7 @@ func FromUserDomain(user domain.User) (*UserMongo, error) {
 	return &UserMongo{
 		ID:       uid,
 		Username: user.Username,
+		Password: user.Password,
 		Email:    user.Email,
 		Status:   user.Status,
 	}, nil
@@ -81,6 +84,20 @@ func (m UserMongoRepository) GetUser(ctx context.Context, id string) (domain.Use
 			return domain.User{}, domain.ErrUserNotFound
 		}
 		slog.Error("Database error in GetUser", "error", err, "id", id)
+		return domain.User{}, domain.ErrInternal
+	}
+	return ToUserDomain(u), nil
+}
+
+func (m UserMongoRepository) GetByUsername(ctx context.Context, username string) (domain.User, error) {
+	res := m.DB.Collection("users").FindOne(ctx, bson.D{{Key: "username", Value: username}}, nil)
+	var u UserMongo
+	err := res.Decode(&u)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return domain.User{}, domain.ErrUserNotFound
+		}
+		slog.Error("Database error in GetByUsername", "error", err, "username", username)
 		return domain.User{}, domain.ErrInternal
 	}
 	return ToUserDomain(u), nil

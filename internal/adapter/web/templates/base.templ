@@ -1,6 +1,8 @@
 package templates
 
-templ Base(page string, contents templ.Component) {
+import "spahtmx/internal/domain"
+
+templ Base(page string, user *domain.User, contents templ.Component) {
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -13,7 +15,7 @@ templ Base(page string, contents templ.Component) {
 </head>
 <body class="min-h-screen bg-gradient-to-br from-primary to-secondary">
 
-    @Nav(page)
+    @Nav(page, user)
 
     <main id="content" class="container mx-auto px-6 py-8 max-w-6xl">
         @contents
