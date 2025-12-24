@@ -9,19 +9,7 @@ templ Base(page string, contents templ.Component) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accueil - SPA HTMX</title>
     <script src="static/js/htmx.min.js"></script>
-    <script src="static/js/tailwind.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#667eea',
-                        secondary: '#764ba2',
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="static/css/styles.css" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-gradient-to-br from-primary to-secondary">
 

@@ -29,7 +29,7 @@ func Base(page string, contents templ.Component) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"fr\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Accueil - SPA HTMX</title><script src=\"static/js/htmx.min.js\"></script><script src=\"static/js/tailwind.min.js\"></script><script>\n        tailwind.config = {\n            theme: {\n                extend: {\n                    colors: {\n                        primary: '#667eea',\n                        secondary: '#764ba2',\n                    }\n                }\n            }\n        }\n    </script></head><body class=\"min-h-screen bg-gradient-to-br from-primary to-secondary\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"fr\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Accueil - SPA HTMX</title><script src=\"static/js/htmx.min.js\"></script><link href=\"static/css/styles.css\" rel=\"stylesheet\"></head><body class=\"min-h-screen bg-gradient-to-br from-primary to-secondary\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

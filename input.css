@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@source "internal/adapter/web/templates/*.templ";
+
+@theme {
+    --color-primary: #667eea;
+    --color-secondary: #764ba2;
+}
