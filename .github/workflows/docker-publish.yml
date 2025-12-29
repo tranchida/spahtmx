@@ -49,4 +49,4 @@ jobs:
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
             docker stop spahtmx || true
             docker rm spahtmx || true
-            docker run -d --name spahtmx -e MONGODB_URL=${{ secrets.MONGODB_URL }} -p 127.0.0.1:8080:8080 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
+            docker run -d --restart=unless-stopped --name spahtmx -e MONGODB_URL=${{ secrets.MONGODB_URL }} -p 127.0.0.1:8080:8080 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
