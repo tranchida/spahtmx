@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Prix Nobel - SPA HTMX{% endblock %}
+
+{% block content %}
+    <div class="space-y-8 animate-fade-in">
+        <!-- Header Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 border-l-8 border-primary">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 class="text-4xl font-extrabold text-primary mb-2">Prix Nobel</h1>
+                    <p class="text-gray-600 text-lg">Découvrez les esprits brillants qui ont façonné notre monde.</p>
+                </div>
+                
+                <!-- Filters -->
+                <div class="flex flex-wrap gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <div class="flex flex-col gap-1.5">
+                        <label for="category" class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Catégorie</label>
+                        <select 
+                            id="category" 
+                            name="category" 
+                            class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 shadow-sm transition-all outline-none"
+                            hx-get="/prize"
+                            hx-target="#content"
+                            hx-push-url="true"
+                            hx-include="[name='year']"
+                        >
+                            <option value="">Toutes les catégories</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat }}" {% if cat == selected_category.as_str() %}selected{% endif %}>{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label for="year" class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Année</label>
+                        <select 
+                            id="year" 
+                            name="year" 
+                            class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 shadow-sm transition-all outline-none"
+                            hx-get="/prize"
+                            hx-target="#content"
+                            hx-push-url="true"
+                            hx-include="[name='category']"
+                        >
+                            <option value="">Toutes les années</option>
+                            {% for y in years %}
+                                <option value="{{ y }}" {% if y == selected_year.as_str() %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prizes Grid -->
+        <div id="prize-grid-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {% include "prize_list.html" %}
+        </div>
+    </div>
+
+    <style>
+    @keyframes fade-in {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    </style>
+{% endblock %}

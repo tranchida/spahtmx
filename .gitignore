@@ -5,3 +5,8 @@
 /bin/
 *.db
 tmp/build-errors.log
+
+
+# Added by cargo
+
+/target

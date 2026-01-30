@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Accueil - SPA HTMX{% endblock %}</title>
+    <script src="/static/js/htmx.min.js"></script>
+    <link href="/static/css/styles.css" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-primary to-secondary">
+
+    {% include "nav.html" %}
+
+    <main id="content" class="container mx-auto px-6 py-8 max-w-6xl">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include "footer.html" %}
+</body>
+</html>
