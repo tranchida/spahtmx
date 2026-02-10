@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -9,7 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"spahtmx/internal/adapter/mongodb"
+	"spahtmx/internal/adapter/database"
 	"spahtmx/internal/adapter/web"
 	"spahtmx/internal/app"
 	"spahtmx/internal/config"
@@ -19,9 +20,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/driver/sqliteshim"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,20 +32,20 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	db, client := initDB(ctx, cfg)
+	db := initDB(ctx, cfg)
 	defer func() {
-		if err := client.Disconnect(ctx); err != nil {
+		if err := db.Close(); err != nil {
 			slog.Error("Error disconnecting from MongoDB", "error", err)
 		}
 	}()
 
-	userRepo := mongodb.UserMongoRepository{
+	userRepo := database.UserBunRepository{
 		DB: db,
 	}
 
 	userService := app.NewUserService(userRepo)
 
-	prizeRepo := mongodb.PrizeMongoRepository{
+	prizeRepo := &database.PrizeBunRepository{
 		DB: db,
 	}
 
@@ -76,61 +77,71 @@ func main() {
 	slog.Info("Server exiting")
 }
 
-func initDB(ctx context.Context, cfg *config.Config) (*mongo.Database, *mongo.Client) {
-	client, err := mongo.Connect(
-		options.Client().ApplyURI(cfg.MongoDBURL),
-	)
+func initDB(ctx context.Context, cfg *config.Config) *bun.DB {
+
+	sqldb, err := sql.Open(sqliteshim.ShimName, "file:test.db?cache=shared&mode=rwc")
 	if err != nil {
-		slog.Error("Failed to connect to MongoDB", "error", err)
+		panic(err)
+	}
+
+	// Create Bun database instance
+	db := bun.NewDB(sqldb, sqlitedialect.New())
+
+	if err := createSchema(ctx, db); err != nil {
+		slog.Error("Failed to create schema", "error", err)
 		os.Exit(1)
 	}
 
-	// Ping pour vérifier la connexion
-	if err := client.Ping(ctx, nil); err != nil {
-		slog.Error("Failed to ping MongoDB", "error", err)
-		os.Exit(1)
-	}
-
-	db := client.Database("test")
-
-	// Seed data (Optionnel pour le dev)
 	if cfg.SeedDB {
 		seedUserDatabase(ctx, db)
 		seedPrizeDatabase(ctx, db)
 	}
 
-	return db, client
+	return db
 }
 
-func seedUserDatabase(ctx context.Context, db *mongo.Database) {
+func createSchema(ctx context.Context, db *bun.DB) error {
+	models := []interface{}{
+		(*database.UserBun)(nil),
+		(*database.PrizeBun)(nil),
+		(*database.LaureateBun)(nil),
+	}
+
+	for _, model := range models {
+		_, err := db.NewCreateTable().Model(model).IfNotExists().Exec(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func seedUserDatabase(ctx context.Context, db *bun.DB) {
 	// Mot de passe "password" haché : $2a$10$Un8S9v2vDqT5v.vQJ2vOLeC9L/9e6Z/v9.v/v9.v/v9.v/v9.v/v9
 	// On va utiliser bcrypt pour générer un vrai hash pour "password"
 	password := "password"
 	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
 	hashedPassword := string(bytes)
 
-	us := []mongodb.UserMongo{
-		{ID: bson.NewObjectID(), Username: "alice", Password: hashedPassword, Email: "alice@fake.com", Status: true},
-		{ID: bson.NewObjectID(), Username: "bob", Password: hashedPassword, Email: "bob@fake.com", Status: false},
-		{ID: bson.NewObjectID(), Username: "charlie", Password: hashedPassword, Email: "charlie@fake.com", Status: true},
+	us := []database.UserBun{
+		{Username: "alice", Password: hashedPassword, Email: "alice@fake.com", Status: true},
+		{Username: "bob", Password: hashedPassword, Email: "bob@fake.com", Status: false},
+		{Username: "charlie", Password: hashedPassword, Email: "charlie@fake.com", Status: true},
 	}
 
-	userColl := db.Collection("users")
-	err := userColl.Drop(ctx)
-	if err != nil {
-		slog.Error("Failed to drop collection", "error", err)
-	}
-
-	_, err = userColl.InsertMany(ctx, us)
-	if err != nil {
-		slog.Error("Failed to insert users", "error", err)
-		os.Exit(1)
+	for _, u := range us {
+		_, err := db.NewInsert().Model(&u).Exec(ctx)
+		if err != nil {
+			slog.Error("Failed to insert user", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	slog.Info("Database seeded successfully")
 }
 
-func seedPrizeDatabase(ctx context.Context, db *mongo.Database) {
+func seedPrizeDatabase(ctx context.Context, db *bun.DB) {
 
 	data, err := os.ReadFile("nobel-prize.json")
 	if err != nil {
@@ -145,39 +156,17 @@ func seedPrizeDatabase(ctx context.Context, db *mongo.Database) {
 	prizes := pl.Prizes
 	fmt.Printf("Loaded %d prizes\n", len(prizes))
 
-	coll := db.Collection("prize")
-
-	err = coll.Drop(ctx)
-	if err != nil {
-		slog.Error("failed to drop collection", "error", err)
-	}
-
-	var docs []mongodb.PrizeMongo
+	prizeRepo := database.PrizeBunRepository{DB: db}
+	inserted := 0
 	for _, p := range prizes {
-		doc, err := mongodb.FromPrizeDomain(p)
-		if err != nil {
-			slog.Error("failed to convert prize domain to mongo", "error", err)
+		if err := prizeRepo.Save(ctx, p); err != nil {
+			slog.Error("failed to insert prize", "error", err)
 			continue
 		}
-		docs = append(docs, *doc)
+		inserted++
 	}
 
-	if len(docs) > 0 {
-		res, err := coll.InsertMany(ctx, docs)
-		if err != nil {
-			slog.Error("failed to insert documents", "error", err)
-		}
-		fmt.Printf("Inserted %d documents\n", len(res.InsertedIDs))
-	}
-
-	_, err = coll.Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "year", Value: 1}}})
-	if err != nil {
-		slog.Error("failed to create index", "error", err)
-	}
-	_, err = coll.Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "category", Value: 1}}})
-	if err != nil {
-		slog.Error("failed to create index", "error", err)
-	}
+	fmt.Printf("Inserted %d documents\n", inserted)
 }
 
 func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {

@@ -1,7 +1,7 @@
 package domain
 
 type User struct {
-	ID       string
+	ID       int64
 	Username string
 	Password string
 	Email    string
@@ -13,7 +13,7 @@ type PrizeList struct {
 }
 
 type Prize struct {
-	ID                string     `json:"id"`
+	ID                int64     `json:"id"`
 	Year              string     `json:"year"`
 	Category          string     `json:"category"`
 	OverallMotivation string     `json:"overallMotivation,omitempty"`
