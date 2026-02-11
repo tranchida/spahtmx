@@ -21,8 +21,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"github.com/uptrace/bun/driver/sqliteshim"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/extra/bundebug"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -35,7 +36,7 @@ func main() {
 	db := initDB(ctx, cfg)
 	defer func() {
 		if err := db.Close(); err != nil {
-			slog.Error("Error disconnecting from MongoDB", "error", err)
+			slog.Error("Error disconnecting from PostgreSQL", "error", err)
 		}
 	}()
 
@@ -79,13 +80,15 @@ func main() {
 
 func initDB(ctx context.Context, cfg *config.Config) *bun.DB {
 
-	sqldb, err := sql.Open(sqliteshim.ShimName, "file:test.db?cache=shared&mode=rwc")
-	if err != nil {
-		panic(err)
-	}
+	sqldb := sql.OpenDB(pgdriver.NewConnector(
+		pgdriver.WithDSN("postgres://user:password@localhost:5432/spahtmx?sslmode=disable"),
+	))
+	db := bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 
-	// Create Bun database instance
-	db := bun.NewDB(sqldb, sqlitedialect.New())
+	// Activer le log des requêtes SQL
+	db = db.WithQueryHook(bundebug.NewQueryHook(
+		bundebug.WithVerbose(true),
+	))
 
 	if err := createSchema(ctx, db); err != nil {
 		slog.Error("Failed to create schema", "error", err)
