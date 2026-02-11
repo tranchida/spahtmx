@@ -9,9 +9,9 @@ Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind C
 - **Templates Templ** : Rendu côté serveur avec Templ (type-safe Go templates)
 - **Design moderne** : Interface responsive avec Tailwind CSS et animations fluides
 - **Gestion d'utilisateurs** : Page admin avec liste d'utilisateurs et statistiques
-- **Prix Nobel** : Consultation des prix Nobel (données MongoDB)
+- **Prix Nobel** : Consultation des prix Nobel (données SQLite)
 - **API interactive** : Toggle du statut utilisateur avec HTMX
-- **Base de données** : Persistance avec MongoDB
+- **Base de données** : Persistance avec SQLite (via Bun)
 - **Fichiers statiques embarqués** : Déploiement simplifié avec embed.FS
 - **CI/CD** : Pipeline GitHub Actions pour Docker et déploiement automatique
 
@@ -24,7 +24,7 @@ Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind C
 │       └── main.go      # Point d'entrée de l'application
 ├── internal/
 │   ├── adapter/
-│   │   ├── mongodb/     # Implémentation des dépôts MongoDB
+│   │   ├── database/    # Implémentation des dépôts SQLite
 │   │   └── web/         # Handlers Echo, templates et assets statiques
 │   │       ├── static/  # Fichiers JS (htmx, tailwind)
 │   │       └── templates/ # Templates Templ
@@ -32,7 +32,7 @@ Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind C
 │   ├── domain/          # Modèles et interfaces (Dépôts)
 │   └── config/          # Configuration via variables d'environnement
 ├── .github/workflows/   # CI/CD (Docker publish & Deploy)
-├── compose.yaml         # Configuration Docker Compose (MongoDB)
+├── compose.yaml         # Configuration Docker Compose (Prometheus)
 ├── Dockerfile           # Build multi-stage pour la production
 ├── Makefile             # Raccourcis pour le développement
 ├── go.mod               # Dépendances Go
@@ -49,22 +49,17 @@ git clone <url-du-repo>
 cd spahtmx
 ```
 
-3. Lancez la base de données MongoDB :
-```bash
-docker compose up -d
-```
-
-4. Installez les dépendances Go :
+3. Installez les dépendances Go :
 ```bash
 go mod download
 ```
 
-5. Générez les templates Templ :
+4. Générez les templates Templ :
 ```bash
 go tool templ generate
 ```
 
-6. Lancez le serveur :
+5. Lancez le serveur :
 ```bash
 # Avec les variables d'environnement par défaut
 go run cmd/server/main.go
@@ -78,7 +73,7 @@ Ou utilisez Air pour le développement (nécessite l'installation de air) :
 air
 ```
 
-7. Ouvrez votre navigateur à l'adresse : **http://localhost:8080**
+6. Ouvrez votre navigateur à l'adresse : **http://localhost:8080**
 
 ## 🎯 Comment ça fonctionne
 
@@ -86,7 +81,7 @@ air
 L'application suit les principes de la **Clean Architecture** (ou Hexagonale) :
 - **Domain** : Entités et interfaces fondamentales.
 - **App** : Services orchestrant la logique métier.
-- **Adapters** : Implémentations spécifiques (MongoDB pour le stockage, Web/Echo pour l'interface).
+- **Adapters** : Implémentations spécifiques (SQLite pour le stockage, Web/Echo pour l'interface).
 
 ### Architecture SPA avec HTMX
 L'application utilise HTMX pour créer une expérience SPA sans framework JavaScript lourd :
@@ -97,7 +92,7 @@ L'application utilise HTMX pour créer une expérience SPA sans framework JavaSc
 ### Routes
 - `/` : Accueil
 - `/admin` : Administration des utilisateurs
-- `/prizes` : Liste des prix Nobel (données MongoDB)
+- `/prizes` : Liste des prix Nobel (données SQLite)
 - `/about` : À propos
 - `/api/switch/{id}` : Toggle du statut utilisateur
 
@@ -112,14 +107,13 @@ make dev     # Lance air pour le rechargement automatique
 ### Configuration
 L'application se configure via des variables d'environnement :
 - `PORT` : Port d'écoute (défaut : 8080)
-- `MONGODB_URL` : URL de connexion MongoDB (défaut : mongodb://root:example@localhost:27017)
 - `SEED_DB` : Si "true", remplit la base de données au démarrage
 
 ## 📝 Technologies
 
 - **Go 1.23** - Backend robuste
 - **Echo** - Framework web performant
-- **MongoDB** - Base de données NoSQL
+- **SQLite** - Base de données relationnelle (via Bun)
 - **Templ** - Templates type-safe pour Go
 - **HTMX** - Frontend dynamique sans JS complexe
 - **Tailwind CSS** - Styling rapide
@@ -135,7 +129,7 @@ Le projet inclut une configuration CI/CD via GitHub Actions (`.github/workflows/
 ### Compilation manuelle
 ```bash
 docker build -t spahtmx .
-docker run -p 8080:8080 -e MONGODB_URL=mongodb://... spahtmx
+docker run -p 8080:8080 spahtmx
 ```
 
 ## 📄 License
