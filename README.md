@@ -9,9 +9,9 @@ Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind C
 - **Templates Templ** : Rendu côté serveur avec Templ (type-safe Go templates)
 - **Design moderne** : Interface responsive avec Tailwind CSS et animations fluides
 - **Gestion d'utilisateurs** : Page admin avec liste d'utilisateurs et statistiques
-- **Prix Nobel** : Consultation des prix Nobel (données SQLite)
+- **Prix Nobel** : Consultation des prix Nobel
 - **API interactive** : Toggle du statut utilisateur avec HTMX
-- **Base de données** : Persistance avec SQLite (via Bun)
+- **Base de données** : Persistance avec PostgreSQL (via Bun ORM)
 - **Fichiers statiques embarqués** : Déploiement simplifié avec embed.FS
 - **CI/CD** : Pipeline GitHub Actions pour Docker et déploiement automatique
 
@@ -24,7 +24,7 @@ Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind C
 │       └── main.go      # Point d'entrée de l'application
 ├── internal/
 │   ├── adapter/
-│   │   ├── database/    # Implémentation des dépôts SQLite
+│   │   ├── database/    # Implémentation des dépôts PostgreSQL (Bun ORM)
 │   │   └── web/         # Handlers Echo, templates et assets statiques
 │   │       ├── static/  # Fichiers JS (htmx, tailwind)
 │   │       └── templates/ # Templates Templ
@@ -32,7 +32,7 @@ Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind C
 │   ├── domain/          # Modèles et interfaces (Dépôts)
 │   └── config/          # Configuration via variables d'environnement
 ├── .github/workflows/   # CI/CD (Docker publish & Deploy)
-├── compose.yaml         # Configuration Docker Compose (Prometheus)
+├── compose.yaml         # Configuration Docker Compose (PostgreSQL)
 ├── Dockerfile           # Build multi-stage pour la production
 ├── Makefile             # Raccourcis pour le développement
 ├── go.mod               # Dépendances Go
@@ -41,7 +41,7 @@ Une application Single Page Application (SPA) moderne utilisant HTMX, Tailwind C
 
 ## 🛠️ Installation et démarrage
 
-1. Assurez-vous d'avoir Go (1.23+) et Docker installés.
+1. Assurez-vous d'avoir Go (1.25+) et Docker installés.
 
 2. Clonez le projet et accédez au répertoire :
 ```bash
@@ -59,7 +59,12 @@ go mod download
 go tool templ generate
 ```
 
-5. Lancez le serveur :
+5. Démarrez PostgreSQL :
+```bash
+docker compose up -d
+```
+
+6. Lancez le serveur :
 ```bash
 # Avec les variables d'environnement par défaut
 go run cmd/server/main.go
@@ -68,12 +73,12 @@ Ou avec le peuplement de la base de données (Seed) :
 ```bash
 SEED_DB=true go run cmd/server/main.go
 ```
-Ou utilisez Air pour le développement (nécessite l'installation de air) :
+Ou utilisez le mode développement (Templ watch + Air hot reload) :
 ```bash
-air
+make dev
 ```
 
-6. Ouvrez votre navigateur à l'adresse : **http://localhost:8080**
+7. Ouvrez votre navigateur à l'adresse : **http://localhost:8080**
 
 ## 🎯 Comment ça fonctionne
 
@@ -81,7 +86,7 @@ air
 L'application suit les principes de la **Clean Architecture** (ou Hexagonale) :
 - **Domain** : Entités et interfaces fondamentales.
 - **App** : Services orchestrant la logique métier.
-- **Adapters** : Implémentations spécifiques (SQLite pour le stockage, Web/Echo pour l'interface).
+- **Adapters** : Implémentations spécifiques (PostgreSQL pour le stockage, Web/Echo pour l'interface).
 
 ### Architecture SPA avec HTMX
 L'application utilise HTMX pour créer une expérience SPA sans framework JavaScript lourd :
@@ -92,7 +97,7 @@ L'application utilise HTMX pour créer une expérience SPA sans framework JavaSc
 ### Routes
 - `/` : Accueil
 - `/admin` : Administration des utilisateurs
-- `/prizes` : Liste des prix Nobel (données SQLite)
+- `/prize` : Liste des prix Nobel
 - `/about` : À propos
 - `/api/switch/{id}` : Toggle du statut utilisateur
 
@@ -111,12 +116,13 @@ L'application se configure via des variables d'environnement :
 
 ## 📝 Technologies
 
-- **Go 1.23** - Backend robuste
-- **Echo** - Framework web performant
-- **SQLite** - Base de données relationnelle (via Bun)
+- **Go 1.25** - Backend robuste
+- **Echo v4** - Framework web performant
+- **PostgreSQL** - Base de données relationnelle (via Bun ORM)
 - **Templ** - Templates type-safe pour Go
 - **HTMX** - Frontend dynamique sans JS complexe
 - **Tailwind CSS** - Styling rapide
+- **Air** - Hot reload pour le développement
 - **Docker & Docker Compose** - Conteneurisation
 - **GitHub Actions** - CI/CD et déploiement continu
 
