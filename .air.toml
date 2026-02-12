@@ -1,0 +1,7 @@
+[build]
+  cmd = "go build -o tmp/main cmd/server/main.go"
+  bin = "tmp/main"
+  delay = 1000
+  exclude_dir = ["tmp", "node_modules"]
+  exclude_regex = ["_templ\\.go$"]
+  include_ext = ["go", "templ"]
