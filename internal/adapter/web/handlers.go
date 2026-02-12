@@ -10,7 +10,6 @@ import (
 	"spahtmx/internal/adapter/web/templates"
 	"spahtmx/internal/app"
 	"spahtmx/internal/domain"
-	"strconv"
 	"time"
 
 	"github.com/a-h/templ"
@@ -67,7 +66,11 @@ func (h *Handler) HandleLoginPost(c echo.Context) error {
 	// On stocke l'utilisateur dans le contexte pour handlePage
 	c.Set("user", user)
 
-	return h.HandleIndexPage(c)
+	if c.Request().Header.Get("HX-Request") == "true" {
+		c.Response().Header().Set("HX-Redirect", RouteAdmin)
+		return c.NoContent(http.StatusOK)
+	}
+	return c.Redirect(http.StatusSeeOther, RouteAdmin)
 }
 
 func (h *Handler) HandleLogout(c echo.Context) error {
@@ -124,24 +127,6 @@ func (h *Handler) HandlePrizePage(c echo.Context) error {
 	category := c.QueryParam("category")
 	year := c.QueryParam("year")
 
-	var prizes []domain.Prize
-	var err error
-
-	if category != "" && year != "" {
-		prizes, err = h.prizeService.GetPrizesByCategoryAndYear(c.Request().Context(), category, year)
-	} else if category != "" {
-		prizes, err = h.prizeService.GetPrizesByCategory(c.Request().Context(), category)
-	} else if year != "" {
-		prizes, err = h.prizeService.GetPrizesByYear(c.Request().Context(), year)
-	} else {
-		currentYear := strconv.Itoa(time.Now().Year())
-		prizes, err = h.prizeService.GetPrizesByYear(c.Request().Context(), currentYear)
-	}
-
-	if err != nil {
-		return translateError(err)
-	}
-
 	categories, err := h.prizeService.GetCategories(c.Request().Context())
 	if err != nil {
 		return translateError(err)
@@ -153,6 +138,27 @@ func (h *Handler) HandlePrizePage(c echo.Context) error {
 
 	sort.Strings(categories)
 	sort.Slice(years, func(i, j int) bool { return years[i] > years[j] })
+
+	// Default to the latest year available in the database
+	if category == "" && year == "" && len(years) > 0 {
+		year = years[0]
+	}
+
+	var prizes []domain.Prize
+
+	if category != "" && year != "" {
+		prizes, err = h.prizeService.GetPrizesByCategoryAndYear(c.Request().Context(), category, year)
+	} else if category != "" {
+		prizes, err = h.prizeService.GetPrizesByCategory(c.Request().Context(), category)
+	} else if year != "" {
+		prizes, err = h.prizeService.GetPrizesByYear(c.Request().Context(), year)
+	} else {
+		prizes, err = h.prizeService.GetPrizes(c.Request().Context())
+	}
+
+	if err != nil {
+		return translateError(err)
+	}
 
 	return h.handlePage(c, RoutePrize, templates.Prize(prizes, categories, years, category, year))
 }
