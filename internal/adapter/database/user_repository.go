@@ -47,7 +47,7 @@ func FromUserDomain(user domain.User) (*UserBun, error) {
 
 func (r UserBunRepository) GetUsers(ctx context.Context) ([]domain.User, error) {
 	var users []UserBun
-	err := r.DB.NewSelect().Model(&users).Scan(ctx)
+	err := r.DB.NewSelect().Model(&users).OrderBy("username", bun.OrderAsc).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -114,4 +114,22 @@ func (r UserBunRepository) UpdateUser(ctx context.Context, user domain.User) err
 	return nil
 }
 
-	
+func (r UserBunRepository) UpdateUserStatus(ctx context.Context, id string) error {
+
+	_, err := r.DB.NewUpdate().Model((*UserBun)(nil)).SetColumn("status", "NOT status").Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return err		
+	}
+
+	return nil
+}
+
+func (r UserBunRepository) DeleteUser(ctx context.Context, id string) error {
+
+	_, err := r.DB.NewDelete().Model((*UserBun)(nil)).Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

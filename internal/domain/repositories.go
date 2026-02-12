@@ -8,6 +8,8 @@ type UserRepository interface {
 	GetByUsername(ctx context.Context, username string) (User, error)
 	CreateUser(ctx context.Context, user User) error
 	UpdateUser(ctx context.Context, user User) error
+	UpdateUserStatus(ctx context.Context, id string) error
+	DeleteUser(ctx context.Context, id string) error
 }
 
 type PrizeRepository interface {
