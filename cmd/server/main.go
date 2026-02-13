@@ -81,14 +81,15 @@ func main() {
 func initDB(ctx context.Context, cfg *config.Config) *bun.DB {
 
 	sqldb := sql.OpenDB(pgdriver.NewConnector(
-		pgdriver.WithDSN("postgres://user:password@localhost:5432/spahtmx?sslmode=disable"),
+		pgdriver.WithDSN(cfg.DatabaseURL),
 	))
 	db := bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 
-	// Activer le log des requêtes SQL
-	db = db.WithQueryHook(bundebug.NewQueryHook(
-		bundebug.WithVerbose(true),
-	))
+	if cfg.DebugSQL {
+		db = db.WithQueryHook(bundebug.NewQueryHook(
+			bundebug.WithVerbose(true),
+		))
+	}
 
 	if err := createSchema(ctx, db); err != nil {
 		slog.Error("Failed to create schema", "error", err)

@@ -7,9 +7,10 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: tranchida/spahtmx
+  DEPLOY_DIR: ~/spahtmx
 
 jobs:
-  build-and-deploy: # Fusion des jobs pour éviter de démarrer 2 VMs
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,18 +36,26 @@ jobs:
           context: .
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
-          cache-from: type=gha # Utilise le cache GitHub Actions
+          cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: SSH and Deploy
+      - name: Copy deployment files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_PRIVATE_SSH_KEY }}
+          target: ${{ env.DEPLOY_DIR }}
+          source: "docker-compose.prod.yml"
+
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_PRIVATE_SSH_KEY }}
           script: |
+            cd ${{ env.DEPLOY_DIR }}
             docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
-            docker stop spahtmx || true
-            docker rm spahtmx || true
-            docker run -d --restart=unless-stopped --name spahtmx -e MONGODB_URL=${{ secrets.MONGODB_URL }} -p 127.0.0.1:8080:8080 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
+            docker compose -f docker-compose.prod.yml pull app
+            docker compose -f docker-compose.prod.yml up -d

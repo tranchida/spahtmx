@@ -14,5 +14,6 @@ FROM docker.io/alpine:latest
 WORKDIR /app
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /app/bin/app .
+COPY --from=builder /app/nobel-prize.json .
 EXPOSE 8080
 CMD ["./app"]

@@ -5,16 +5,18 @@ import (
 )
 
 type Config struct {
-	Port       string
-	MongoDBURL string
-	SeedDB     bool
+	Port        string
+	DatabaseURL string
+	DebugSQL    bool
+	SeedDB      bool
 }
 
 func Load() *Config {
 	return &Config{
-		Port:       getEnv("PORT", "8080"),
-		MongoDBURL: getEnv("MONGODB_URL", "mongodb://root:example@localhost:27017"),
-		SeedDB:     getEnv("SEED_DB", "false") == "true",
+		Port:        getEnv("PORT", "8080"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/spahtmx?sslmode=disable"),
+		DebugSQL:    getEnv("DEBUG_SQL", "false") == "true",
+		SeedDB:      getEnv("SEED_DB", "false") == "true",
 	}
 }
 
