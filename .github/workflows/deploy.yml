@@ -22,6 +22,7 @@ jobs:
           key: ${{ secrets.SERVER_PRIVATE_SSH_KEY }}
           source: "Dockerfile,docker-compose.yml,cmd,internal,go.mod,go.sum"
           target: ${{ env.DEPLOY_DIR }}
+          overwrite: true
 
       - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.2.0
