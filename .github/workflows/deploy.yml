@@ -1,0 +1,32 @@
+name: Docker Fast Deploy
+
+on:
+  push:
+    branches: [ "master" ]
+
+env:
+  DEPLOY_DIR: ~/spahtmx
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy source to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_PRIVATE_SSH_KEY }}
+          source: "Dockerfile,docker-compose.yml,cmd,internal,go.mod,go.sum"
+          target: ${{ env.DEPLOY_DIR }}
+
+      - name: Deploy with Docker Compose
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_PRIVATE_SSH_KEY }}
+          script: cd ${{ env.DEPLOY_DIR }} && docker compose up -f docker-compose.prod.yml -d --build
