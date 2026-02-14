@@ -20,7 +20,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_PRIVATE_SSH_KEY }}
-          source: "Dockerfile,docker-compose.yml,cmd,internal,go.mod,go.sum"
+          source: "Dockerfile,docker-compose.prod.yml,cmd,internal,go.mod,go.sum"
           target: ${{ env.DEPLOY_DIR }}
           overwrite: true
 
