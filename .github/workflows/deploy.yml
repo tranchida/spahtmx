@@ -30,4 +30,4 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_PRIVATE_SSH_KEY }}
-          script: cd ${{ env.DEPLOY_DIR }} && docker compose -f docker-compose.prod.yml up -d --build
+          script: cd ${{ env.DEPLOY_DIR }} && podman compose -f docker-compose.prod.yml up -d --build
