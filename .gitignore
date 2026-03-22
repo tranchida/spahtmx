@@ -5,3 +5,5 @@
 /bin/
 *.db
 tmp/build-errors.log
+.env
+

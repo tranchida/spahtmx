@@ -8,8 +8,35 @@ env:
   DEPLOY_DIR: ~/spahtmx
 
 jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> $GITHUB_ENV
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME }}
+
   deploy:
     runs-on: ubuntu-latest
+    needs: build-and-push
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,14 +47,23 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_PRIVATE_SSH_KEY }}
-          source: "Dockerfile,docker-compose.prod.yml,cmd,internal,go.mod,go.sum,nobel-prize.json"
+          source: "docker-compose.yml,nobel-prize.json"
           target: ${{ env.DEPLOY_DIR }}
           overwrite: true
 
       - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_PRIVATE_SSH_KEY }}
-          script: cd ${{ env.DEPLOY_DIR }} && podman compose -f docker-compose.prod.yml up -d --build
+          envs: GITHUB_TOKEN
+          script: |
+            cd ${{ env.DEPLOY_DIR }}
+            export IMAGE_NAME=ghcr.io/${{ github.repository }}:latest
+            export IMAGE_NAME=${IMAGE_NAME,,}
+            echo $GITHUB_TOKEN | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+            podman pull $IMAGE_NAME
+            IMAGE_NAME=$IMAGE_NAME podman compose up -d
