@@ -10,6 +10,7 @@ type Config struct {
 	DatabaseURL string
 	DebugSQL    bool
 	SeedDB      bool
+	JWTSecret   string
 }
 
 func Load() *Config {
@@ -18,6 +19,7 @@ func Load() *Config {
 		DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/spahtmx?sslmode=disable"),
 		DebugSQL:    getEnv("DEBUG_SQL", "false") == "true",
 		SeedDB:      getEnv("SEED_DB", "false") == "true",
+		JWTSecret:   getEnv("JWT_SECRET", "super-secret-key-change-me"),
 	}
 }
 

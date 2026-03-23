@@ -19,6 +19,7 @@ import (
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/uptrace/bun"
@@ -54,7 +55,7 @@ func main() {
 	prizeService := app.NewPrizeService(prizeRepo)
 	authService := app.NewAuthService(userRepo)
 
-	e := initWeb(userService, prizeService, authService)
+	e := initWeb(userService, prizeService, authService, cfg)
 
 	// Démarrage du serveur dans une goroutine
 	go func() {
@@ -174,24 +175,37 @@ func seedPrizeDatabase(ctx context.Context, db *bun.DB) {
 	fmt.Printf("Inserted %d documents\n", inserted)
 }
 
-func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		cookie, err := c.Cookie("session")
-		if err != nil || cookie.Value == "" {
-			// Si c'est une requête HTMX, on peut renvoyer un header pour rediriger côté client
-			// ou simplement renvoyer vers la page de login
-			if c.Request().Header.Get("HX-Request") == "true" {
-				c.Response().Header().Set("HX-Redirect", "/login")
-				return nil
+func AuthMiddleware(cfg *config.Config) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			redirect := func() error {
+				if c.Request().Header.Get("HX-Request") == "true" {
+					c.Response().Header().Set("HX-Redirect", "/login")
+					return nil
+				}
+				return c.Redirect(http.StatusSeeOther, "/login")
 			}
-			return c.Redirect(http.StatusSeeOther, "/login")
+
+			cookie, err := c.Cookie("session")
+			if err != nil || cookie.Value == "" {
+				return redirect()
+			}
+
+			token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
+				return []byte(cfg.JWTSecret), nil
+			})
+
+			if err != nil || !token.Valid {
+				return redirect()
+			}
+
+			return next(c)
 		}
-		return next(c)
 	}
 }
 
-func initWeb(userService *app.UserService, prizeService *app.PrizeService, authService *app.AuthService) *echo.Echo {
-	handler := web.NewHandler(userService, prizeService, authService)
+func initWeb(userService *app.UserService, prizeService *app.PrizeService, authService *app.AuthService, cfg *config.Config) *echo.Echo {
+	handler := web.NewHandler(userService, prizeService, authService, cfg)
 
 	e := echo.New()
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
@@ -210,15 +224,17 @@ func initWeb(userService *app.UserService, prizeService *app.PrizeService, authS
 		},
 	}))
 	e.Use(middleware.Gzip())
+	e.Use(middleware.Recover()) // Prevents server crashes on panics
+	e.Use(middleware.Secure())  // Adds secure headers (XSS, Content-Type sniffing, etc.)
 
 	e.GET(web.RouteIndex, handler.HandleIndexPage)
 	e.GET(web.RoutePrize, handler.HandlePrizePage)
-	e.GET(web.RouteAdmin, handler.HandleAdminPage, AuthMiddleware)
+	e.GET(web.RouteAdmin, handler.HandleAdminPage, AuthMiddleware(cfg))
 	e.GET(web.RouteAbout, handler.HandleAboutPage)
 	e.GET(web.RouteLogin, handler.HandleLoginPage)
 	e.POST(web.RouteLogin, handler.HandleLoginPost)
 	e.POST(web.RouteLogout, handler.HandleLogout)
-	e.POST(web.RouteSwitch, handler.HandleUserStatusSwitch, AuthMiddleware)
+	e.POST(web.RouteSwitch, handler.HandleUserStatusSwitch, AuthMiddleware(cfg))
 	e.GET(web.RouteStatus, func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})

@@ -9,10 +9,12 @@ import (
 	"sort"
 	"spahtmx/internal/adapter/web/templates"
 	"spahtmx/internal/app"
+	"spahtmx/internal/config"
 	"spahtmx/internal/domain"
 	"time"
 
 	"github.com/a-h/templ"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
 
@@ -32,13 +34,15 @@ type Handler struct {
 	userService  *app.UserService
 	prizeService *app.PrizeService
 	authService  *app.AuthService
+	config       *config.Config
 }
 
-func NewHandler(userService *app.UserService, prizeService *app.PrizeService, authService *app.AuthService) *Handler {
+func NewHandler(userService *app.UserService, prizeService *app.PrizeService, authService *app.AuthService, cfg *config.Config) *Handler {
 	return &Handler{
 		userService:  userService,
 		prizeService: prizeService,
 		authService:  authService,
+		config:       cfg,
 	}
 }
 
@@ -55,12 +59,20 @@ func (h *Handler) HandleLoginPost(c echo.Context) error {
 		return h.handlePage(c, RouteLogin, templates.Login("Identifiants incorrects"))
 	}
 
-	// Création du cookie de session (très basique pour l'exemple)
+	// Génération du JWT
+	tokenString, err := h.authService.GenerateToken(user.Username, h.config.JWTSecret)
+	if err != nil {
+		slog.Error("Failed to generate token", "error", err)
+		return h.handlePage(c, RouteLogin, templates.Login("Erreur interne de connexion"))
+	}
+
 	cookie := new(http.Cookie)
 	cookie.Name = "session"
-	cookie.Value = user.Username
+	cookie.Value = tokenString
 	cookie.Path = "/"
 	cookie.Expires = time.Now().Add(24 * time.Hour)
+	cookie.HttpOnly = true
+	cookie.SameSite = http.SameSiteLaxMode
 	c.SetCookie(cookie)
 
 	// On stocke l'utilisateur dans le contexte pour handlePage
@@ -79,6 +91,8 @@ func (h *Handler) HandleLogout(c echo.Context) error {
 	cookie.Value = ""
 	cookie.Path = "/"
 	cookie.MaxAge = -1
+	cookie.HttpOnly = true
+	cookie.SameSite = http.SameSiteLaxMode
 	c.SetCookie(cookie)
 
 	// On marque explicitement qu'il n'y a plus d'utilisateur pour handlePage
@@ -184,8 +198,17 @@ func (h *Handler) handlePage(c echo.Context, page string, contents templ.Compone
 	} else if c.Get("logout") == nil {
 		// Sinon on cherche dans le cookie, sauf si on vient de se déconnecter
 		if cookie, err := c.Cookie("session"); err == nil && cookie.Value != "" {
-			if u, err := h.authService.GetUserByUsername(c.Request().Context(), cookie.Value); err == nil {
-				user = &u
+			token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
+				return []byte(h.config.JWTSecret), nil
+			})
+			if err == nil && token.Valid {
+				if claims, ok := token.Claims.(jwt.MapClaims); ok {
+					if sub, ok := claims["sub"].(string); ok {
+						if u, err := h.authService.GetUserByUsername(c.Request().Context(), sub); err == nil {
+							user = &u
+						}
+					}
+				}
 			}
 		}
 	}

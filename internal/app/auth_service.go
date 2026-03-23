@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"spahtmx/internal/domain"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -41,6 +43,15 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (dom
 
 func (s *AuthService) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
 	return s.userRepo.GetByUsername(ctx, username)
+}
+
+func (s *AuthService) GenerateToken(username, secret string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Subject:   username,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+	})
+	return token.SignedString([]byte(secret))
 }
 
 func (s *AuthService) HashPassword(password string) (string, error) {
