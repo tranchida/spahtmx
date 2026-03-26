@@ -24,15 +24,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Lowercase image name
-        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> $GITHUB_ENV
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_NAME }}
+          tags: ghcr.io/${{ github.repository }}:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -62,7 +59,6 @@ jobs:
           envs: GITHUB_TOKEN
           script: |
             cd ${{ env.DEPLOY_DIR }}
-            export IMAGE_NAME=ghcr.io/${{ github.repository }}:latest
             echo $GITHUB_TOKEN | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-            podman pull $IMAGE_NAME
+            podman pull ghcr.io/${{ github.repository }}:latest
             systemctl --user restart spahtmx
