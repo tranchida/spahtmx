@@ -93,7 +93,7 @@ func initDB(ctx context.Context, cfg *config.Config) *bun.DB {
 		))
 	}
 
-	if err := createSchema(ctx, db); err != nil {
+	if err := createSchema(ctx, db, cfg.SeedDB); err != nil {
 		slog.Error("Failed to create schema", "error", err)
 		os.Exit(1)
 	}
@@ -106,11 +106,20 @@ func initDB(ctx context.Context, cfg *config.Config) *bun.DB {
 	return db
 }
 
-func createSchema(ctx context.Context, db *bun.DB) error {
+func createSchema(ctx context.Context, db *bun.DB, purge bool) error {
 	models := []interface{}{
 		(*database.UserBun)(nil),
 		(*database.PrizeBun)(nil),
 		(*database.LaureateBun)(nil),
+	}
+
+	if purge {
+		for i := len(models) - 1; i >= 0; i-- {
+			_, err := db.NewDropTable().Model(models[i]).IfExists().Cascade().Exec(ctx)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	for _, model := range models {
