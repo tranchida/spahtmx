@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -22,9 +21,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -81,10 +81,27 @@ func main() {
 }
 
 func initDB(ctx context.Context, cfg *config.Config) *bun.DB {
+	pgxCfg, err := pgx.ParseConfig(cfg.DatabaseURL)
+	if err != nil {
+		slog.Error("Invalid DATABASE_URL", "error", err)
+		os.Exit(1)
+	}
 
-	sqldb := sql.OpenDB(pgdriver.NewConnector(
-		pgdriver.WithDSN(cfg.DatabaseURL),
-	))
+	if pgxCfg.RuntimeParams == nil {
+		pgxCfg.RuntimeParams = map[string]string{}
+	}
+	searchPath := "public"
+	if cfg.DBSchema != "" && cfg.DBSchema != "public" {
+		searchPath = cfg.DBSchema + ",public"
+	}
+	pgxCfg.RuntimeParams["search_path"] = searchPath
+
+	sqldb := stdlib.OpenDB(*pgxCfg)
+	if err := sqldb.PingContext(ctx); err != nil {
+		slog.Error("Failed to connect to PostgreSQL", "error", err)
+		os.Exit(1)
+	}
+
 	db := bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 
 	if cfg.DebugSQL {
