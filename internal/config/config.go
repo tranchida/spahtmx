@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -32,7 +31,7 @@ func Load() *Config {
 
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
-		fmt.Printf("Environment variable %s = %s\n", key, value)
+		//fmt.Printf("Environment variable %s = %s\n", key, value)
 		return value
 	}
 	return fallback
