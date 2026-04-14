@@ -61,4 +61,4 @@ jobs:
             cd ${{ env.DEPLOY_DIR }}
             echo $GITHUB_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ghcr.io/${{ github.repository }}:latest
-            systemctl --user restart spahtmx
+            docker compose up -d --force-recreate
